@@ -1,0 +1,65 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test-backend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore TaskFlow.sln
+      
+    - name: Build backend
+      run: dotnet build TaskFlow.sln --no-restore
+      
+    # - name: Run Unit Tests
+    #   run: dotnet test src/tests/TaskFlow.Api.UnitTests --no-build --verbosity normal
+      
+    # - name: Run Integration Tests
+    #   run: dotnet test src/tests/TaskFlow.Api.IntegrationTests --no-build --verbosity normal
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: 'TaskFlow.Web/package-lock.json'
+        
+    - name: Install dependencies
+      working-directory: ./TaskFlow.Web
+      run: npm ci || npm install
+      
+    - name: Build frontend
+      working-directory: ./TaskFlow.Web
+      run: npm run build
+
+  docker-build:
+    needs: [build-and-test-backend, build-frontend]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build API Image
+      run: docker build -t taskflow-api ./TaskFlow
+      
+    - name: Build Frontend Image
+      run: docker build -t taskflow-frontend ./TaskFlow.Web
