@@ -8,7 +8,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(config => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -18,10 +18,8 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
     response => response,
     error => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
-        }
+        // Don't clear localStorage here - let the router guard handle redirects
+        // This prevents logout when a single API call fails
         return Promise.reject(error);
     }
 );

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, computed, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useTaskStore, type Task } from '../stores/taskStore';
 import KanbanColumn from '../components/KanbanColumn.vue';
 import TaskForm from '../components/TaskForm.vue';
+import { DragDropProvider } from '@dnd-kit/vue';
 
 const taskStore = useTaskStore();
 const isFormOpen = ref(false);
@@ -20,12 +21,6 @@ onMounted(async () => {
   await taskStore.fetchTasks();
 });
 
-const getTasksForStatus = (status: number) => {
-  return taskStore.tasks
-    .filter(t => t.status === status)
-    .sort((a, b) => a.orderIndex - b.orderIndex);
-};
-
 const handleTaskClick = (task: Task) => {
   editingTask.value = task;
   isFormOpen.value = true;
@@ -38,16 +33,49 @@ const openNewTaskForm = (status: number = 0) => {
 };
 
 const handleSaveTask = async (taskData: Partial<Task>) => {
-  if (editingTask.value) {
-    await taskStore.updateTask(editingTask.value.id, taskData);
-  } else {
-    await taskStore.createTask({ ...taskData, status: taskData.status ?? defaultStatusForNew.value, orderIndex: 0 });
+  console.log('handleSaveTask called with:', taskData, 'editingTask:', editingTask.value);
+  try {
+    if (editingTask.value) {
+      await taskStore.updateTask(editingTask.value.id, taskData);
+    } else {
+      await taskStore.createTask({ ...taskData, status: taskData.status ?? defaultStatusForNew.value, orderIndex: 0 });
+    }
+    isFormOpen.value = false;
+  } catch (error) {
+    console.error('Error saving task:', error);
+    alert('Failed to save task. Please check your authentication and try again.');
   }
-  isFormOpen.value = false;
 };
 
 const closeForm = () => {
   isFormOpen.value = false;
+};
+
+const handleTaskDrop = async (event: any) => {
+  const active = event.active;
+  const over = event.over;
+  if (!active || !over) return;
+
+  const { taskId } = active.data.current ?? {};
+  if (!taskId) return;
+
+  let newStatus: number;
+  let newOrderIndex: number;
+
+  if (typeof over.id === 'string' && over.id.startsWith('column-')) {
+    // Бросили в пустое место колонки – кладём в конец этой колонки
+    newStatus = Number(over.id.replace('column-', ''));
+    const columnTasks = taskStore.getTasksForStatus(newStatus);
+    newOrderIndex = columnTasks.length;
+  } else {
+    // Бросили на другую задачу – берём её статус и индекс
+    const targetTask = taskStore.tasks.find((t) => t.id === over.id);
+    if (!targetTask) return;
+    newStatus = targetTask.status;
+    newOrderIndex = targetTask.orderIndex;
+  }
+
+  await taskStore.moveTask(taskId, newStatus, newOrderIndex);
 };
 </script>
 
@@ -70,21 +98,23 @@ const closeForm = () => {
     </header>
 
     <div class="flex-1 overflow-x-auto p-6">
-      <div v-if="taskStore.loading" class="flex justify-center items-center h-full">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-      
-      <div v-else class="flex gap-6 h-full items-start">
-        <KanbanColumn 
-          v-for="column in columns" 
-          :key="column.id"
-          :title="column.title"
-          :status="column.id"
-          :tasks="getTasksForStatus(column.id)"
-          @task-click="handleTaskClick"
-          @add-task="openNewTaskForm"
-        />
-      </div>
+      <DragDropProvider @dragEnd="handleTaskDrop">
+        <div v-if="taskStore.loading" class="flex justify-center items-center h-full">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+        
+        <div v-else class="flex gap-6 h-full items-start">
+          <KanbanColumn 
+            v-for="column in columns" 
+            :key="column.id"
+            :title="column.title"
+            :status="column.id"
+            :tasks="taskStore.getTasksForStatus(column.id)"
+            @task-click="handleTaskClick"
+            @add-task="openNewTaskForm"
+          />
+        </div>
+      </DragDropProvider>
     </div>
 
     <!-- Modal Form Layer -->

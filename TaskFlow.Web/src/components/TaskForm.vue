@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import type { Task } from '../stores/taskStore';
 
 const props = defineProps<{
@@ -21,6 +21,7 @@ const form = ref<Partial<Task>>({
 });
 
 const submit = () => {
+  console.log('Form submitted with data:', form.value);
   emit('save', form.value);
 };
 </script>
@@ -32,21 +33,21 @@ const submit = () => {
     <form @submit.prevent="submit" class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-        <input 
-          v-model="form.title" 
-          type="text" 
+        <input
+          v-model="form.title"
+          type="text"
           required
-          class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           placeholder="Enter task title"
         />
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-        <textarea 
-          v-model="form.description" 
+        <textarea
+          v-model="form.description"
           rows="3"
-          class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           placeholder="Task description..."
         ></textarea>
       </div>
@@ -54,9 +55,9 @@ const submit = () => {
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-          <select 
-            v-model="form.priority" 
-            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+          <select
+            v-model="form.priority"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
           >
             <option :value="0">Low</option>
             <option :value="1">Medium</option>
@@ -64,12 +65,12 @@ const submit = () => {
             <option :value="3">Urgent</option>
           </select>
         </div>
-        
+
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-          <select 
-            v-model="form.status" 
-            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+          <select
+            v-model="form.status"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
           >
             <option :value="0">To Do</option>
             <option :value="1">In Progress</option>
@@ -81,10 +82,10 @@ const submit = () => {
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
-        <input 
-          v-model="form.deadline" 
+        <input
+          v-model="form.deadline"
           type="date"
-          class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
 

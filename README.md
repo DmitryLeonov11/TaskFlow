@@ -1,55 +1,52 @@
-# TaskFlow - Smart Task Manager
+## TaskFlow
 
-TaskFlow is a modern full-stack task management application featuring a Kanban board, drag-and-drop support, real-time updates, and a Clean Architecture backend.
+Простое Kanban‑приложение для управления задачами (аналог Todoist + Trello) на стеке ASP.NET Core + Vue 3.
 
-## Architecture
+### Стек
 
-- **Backend**: ASP.NET Core 8 Web API, Vertical Slice Architecture, CQRS (MediatR), Entity Framework Core (PostgreSQL).
-- **Frontend**: Vue 3 (Composition API), Vite, Pinia, TailwindCSS.
-- **Real-time**: SignalR for live task updates and comments.
-- **Infrastructure**: Docker & Docker Compose for easy local setup. GitHub Actions for CI pipeline.
+- **Backend**: ASP.NET Core 8, EF Core (PostgreSQL), CQRS + MediatR, ASP.NET Identity + JWT, SignalR.
+- **Frontend**: Vue 3 (Composition API), Vite, Pinia, TailwindCSS, daisyUI.
+- **Инфраструктура**: Docker + docker‑compose, GitHub Actions.
 
-## Features
+### Быстрый старт
 
-- [x] Board with drag-and-drop columns
-- [x] Task creation, editing, status tracking
-- [x] User Authentication & Authorization (JWT)
-- [x] Prioritization and Deadlines
-- [x] Tags and Filtering
-- [x] Real-time updates via SignalR
-- [x] Comments & Attachments (Backend Support)
-- [x] Notifications system
+1. Склонируйте репозиторий.
+2. Создайте файл `.env` в корне проекта (скопируйте `.env.example`):
+   ```bash
+   cp .env.example .env
+   ```
+3. Настройте переменные в `.env`:
+   - `POSTGRES_USER`, `POSTGRES_PASSWORD` — учётные данные PostgreSQL
+   - `CONNECTION_STRING` — строка подключения к БД
+   - `JWT_KEY` — секретный ключ для JWT (минимум 32 символа)
 
-## Quick Start (Docker)
+### Запуск с Docker
 
-1. Ensure Docker Desktop is running.
-2. Run `docker-compose up --build -d` from the root directory.
-3. Access Frontend at `http://localhost:8080`
-4. Access Backend Swagger at `http://localhost:5000/swagger`
+```bash
+docker-compose up --build -d
+```
 
-## Local Development (Without Docker)
+- Фронтенд: `http://localhost:8080`
+- Swagger API: `http://localhost:5000/swagger`
 
-### Backend
-1. Navigate to `TaskFlow` directory.
-2. Update `appsettings.Development.json` with your PostgreSQL string.
-3. Run `dotnet ef database update`
-4. Run `dotnet run` 
+### Локальный запуск
 
-### Frontend
-1. Navigate to `TaskFlow.Web` directory.
-2. Run `npm install`
-3. Run `npm run dev`
+**Backend**
+```bash
+cd TaskFlow
+dotnet restore
+dotnet ef database update
+dotnet run --urls "http://localhost:5000"
+```
 
-## CI/CD Workflow
+**Frontend** (в новом терминале)
+```bash
+cd TaskFlow.Web
+npm install
+npm run dev
+```
 
-GitHub Actions runs on every push to main to:
-1. Build and Test the .NET Backend.
-2. Build the Vue Frontend.
-3. Prepare Docker images for deployment to environments like Render/Railway and Vercel.
+- Фронтенд: `http://localhost:5173`
+- Swagger API: `http://localhost:5000/swagger`
+- Health check: `http://localhost:5000/health`
 
-## Roadmap
-
-- [ ] Implement team projects & collaboration
-- [ ] Implement robust sub-tasks 
-- [ ] Calendar view with sync
-- [ ] Email reports and reminders

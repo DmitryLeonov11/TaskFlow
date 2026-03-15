@@ -3,16 +3,21 @@ using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.DTOs;
 using TaskFlow.Domain.Entities;
 using TaskFlow.Infrastructure.Persistence;
+using Microsoft.AspNetCore.SignalR;
+using TaskFlow.Hubs;
+using TaskStatus = TaskFlow.Domain.Entities.TaskStatus;
 
 namespace TaskFlow.Features.Tasks.MoveTask;
 
 public class MoveTaskHandler : IRequestHandler<MoveTaskCommand, TaskItemDto>
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly IHubContext<TasksHub> _tasksHub;
 
-    public MoveTaskHandler(ApplicationDbContext dbContext)
+    public MoveTaskHandler(ApplicationDbContext dbContext, IHubContext<TasksHub> tasksHub)
     {
         _dbContext = dbContext;
+        _tasksHub = tasksHub;
     }
 
     public async Task<TaskItemDto> Handle(MoveTaskCommand request, CancellationToken cancellationToken)
@@ -64,7 +69,19 @@ public class MoveTaskHandler : IRequestHandler<MoveTaskCommand, TaskItemDto>
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return MapToDto(task);
+        var dto = MapToDto(task);
+
+        await _tasksHub.Clients.User(request.UserId).SendAsync("TaskMoved", new
+        {
+            taskId = task.Id,
+            userId = request.UserId,
+            oldStatus = (int)oldStatus,
+            newStatus = (int)newStatus,
+            newOrderIndex = task.OrderIndex,
+            movedAt = DateTime.UtcNow
+        }, cancellationToken);
+
+        return dto;
     }
 
     private static TaskItemDto MapToDto(TaskItem task)

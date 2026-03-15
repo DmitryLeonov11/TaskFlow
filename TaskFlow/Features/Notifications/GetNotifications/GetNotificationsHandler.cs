@@ -1,5 +1,7 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.DTOs;
+using TaskFlow.Infrastructure.Persistence;
 
 namespace TaskFlow.Features.Notifications.GetNotifications;
 

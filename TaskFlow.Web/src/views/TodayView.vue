@@ -34,12 +34,17 @@ const handleTaskClick = (task: Task) => {
 };
 
 const handleSaveTask = async (taskData: Partial<Task>) => {
-  if (editingTask.value) {
-    await taskStore.updateTask(editingTask.value.id, taskData);
-  } else {
-    await taskStore.createTask(taskData);
+  try {
+    if (editingTask.value) {
+      await taskStore.updateTask(editingTask.value.id, taskData);
+    } else {
+      await taskStore.createTask(taskData);
+    }
+    isFormOpen.value = false;
+  } catch (error) {
+    console.error('Error saving task:', error);
+    alert('Failed to save task. Please check your authentication and try again.');
   }
-  isFormOpen.value = false;
 };
 </script>
 

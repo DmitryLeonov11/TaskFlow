@@ -1,4 +1,6 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using TaskFlow.Application.DTOs;
 
 namespace TaskFlow.Features.Auth.Login;
 

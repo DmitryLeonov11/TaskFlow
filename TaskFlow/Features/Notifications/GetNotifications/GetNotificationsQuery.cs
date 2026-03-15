@@ -3,7 +3,7 @@ using TaskFlow.Application.DTOs;
 
 namespace TaskFlow.Features.Notifications.GetNotifications;
 
-public class GetNotificationsQuery : IRequest<IReadOnlyList<NotificationDto>>
+public class GetNotificationsQuery : IRequest<GetNotificationsResponse>
 {
     public required string UserId { get; set; }
     public bool? IsRead { get; set; }

@@ -10,8 +10,26 @@ using TaskFlow.Domain.Identity;
 using TaskFlow.Features.Tasks;
 using TaskFlow.Infrastructure.Persistence;
 using TaskFlow.Hubs;
+using FluentValidation;
+using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load environment variables from .env file (if exists)
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", ".env");
+if (File.Exists(envPath))
+{
+    var envVars = File.ReadAllLines(envPath)
+        .Where(l => !string.IsNullOrWhiteSpace(l) && !l.StartsWith('#'))
+        .Select(l => l.Split('=', 2))
+        .Where(parts => parts.Length == 2)
+        .ToDictionary(parts => parts[0].Trim(), parts => parts[1].Trim());
+
+    foreach (var kvp in envVars)
+    {
+        Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
+    }
+}
 
 // Serilog
 Log.Logger = new LoggerConfiguration()
@@ -24,7 +42,8 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Database
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") 
+    ?? builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -52,8 +71,20 @@ builder.Services
     .AddDefaultTokenProviders();
 
 // JWT Authentication
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? throw new InvalidOperationException("JWT Key not configured"));
+var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") 
+    ?? builder.Configuration["JwtSettings:Key"] 
+    ?? throw new InvalidOperationException("JWT Key not configured");
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") 
+    ?? builder.Configuration["JwtSettings:Issuer"] 
+    ?? "TaskFlow";
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") 
+    ?? builder.Configuration["JwtSettings:Audience"] 
+    ?? "FrontendApp";
+var jwtExpiration = int.TryParse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES"), out var exp) 
+    ? exp 
+    : 1440;
+
+var key = Encoding.ASCII.GetBytes(jwtKey);
 
 builder.Services
     .AddAuthentication(options =>
@@ -68,9 +99,9 @@ builder.Services
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(key),
             ValidateIssuer = true,
-            ValidIssuer = jwtSettings["Issuer"],
+            ValidIssuer = jwtIssuer,
             ValidateAudience = true,
-            ValidAudience = jwtSettings["Audience"],
+            ValidAudience = jwtAudience,
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
@@ -96,7 +127,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:8080")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -212,6 +243,20 @@ app.UseAuthorization();
 
 // Map Controllers
 app.MapControllers();
+
+// Minimal API feature endpoints
+TaskFlow.Features.Auth.Login.LoginEndpoint.MapLoginEndpoint(app);
+TaskFlow.Features.Auth.Register.RegisterEndpoint.MapRegisterEndpoint(app);
+TaskFlow.Features.Auth.ResetPassword.ResetPasswordEndpoint.MapResetPasswordEndpoints(app);
+TaskFlow.Features.Attachments.UploadAttachment.UploadAttachmentEndpoint.MapUploadAttachmentEndpoint(app);
+TaskFlow.Features.Attachments.GetAttachments.GetAttachmentsEndpoint.MapGetAttachmentsEndpoint(app);
+TaskFlow.Features.Attachments.DownloadAttachment.DownloadAttachmentEndpoint.MapDownloadAttachmentEndpoint(app);
+TaskFlow.Features.Attachments.DeleteAttachment.DeleteAttachmentEndpoint.MapDeleteAttachmentEndpoint(app);
+TaskFlow.Features.Comments.CreateComment.CreateCommentEndpoint.MapCreateCommentEndpoint(app);
+TaskFlow.Features.Comments.GetComments.GetCommentsEndpoint.MapGetCommentsEndpoint(app);
+TaskFlow.Features.Comments.DeleteComment.DeleteCommentEndpoint.MapDeleteCommentEndpoint(app);
+TaskFlow.Features.Notifications.GetNotifications.GetNotificationsEndpoint.MapGetNotificationsEndpoint(app);
+TaskFlow.Features.Notifications.MarkAsRead.MarkAsReadEndpoint.MapMarkAsReadEndpoint(app);
 
 // Map Hubs
 app.MapHub<TasksHub>("/hubs/tasks");

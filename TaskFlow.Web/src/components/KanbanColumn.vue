@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import type { Task } from '../stores/taskStore';
 import TaskCard from './TaskCard.vue';
+import { useDroppable } from '@dnd-kit/vue';
 
 const props = defineProps<{
   title: string;
@@ -14,12 +15,21 @@ const emit = defineEmits<{
   (e: 'add-task', status: number): void;
 }>();
 
-// Using dnd-kit or vuedraggable would be implemented here in a real project
-// For now, we stub the drop zone support. 
+const columnElement = ref<HTMLElement | null>(null);
+const { isDropTarget } = useDroppable({
+  id: `column-${props.status}`,
+  element: columnElement
+});
 </script>
 
 <template>
-  <div class="flex flex-col flex-shrink-0 w-80 bg-gray-50 rounded-xl p-3 border border-gray-200 shadow-sm h-full">
+  <div
+    ref="columnElement"
+    class="flex flex-col flex-shrink-0 w-80 bg-gray-50 rounded-xl p-3 border border-gray-200 shadow-sm h-full"
+    :class="{
+      'ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-50': isDropTarget
+    }"
+  >
     <div class="flex items-center justify-between mb-3 px-1">
       <h3 class="font-semibold text-gray-700 flex items-center gap-2">
         {{ title }}
@@ -37,12 +47,13 @@ const emit = defineEmits<{
       </button>
     </div>
 
-    <div class="flex-1 overflow-y-auto min-h-0 custom-scrollbar space-y-3 p-1">
-      <!-- Draggable tasks area -->
+    <div
+      class="flex-1 overflow-y-auto min-h-0 custom-scrollbar space-y-3 p-1"
+    >
       <TaskCard 
         v-for="task in tasks" 
         :key="task.id" 
-        :task="task" 
+        :task="task"
         @click="emit('task-click', task)"
       />
       

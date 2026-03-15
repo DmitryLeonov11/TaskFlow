@@ -1,14 +1,14 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: taskflow
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: taskflow_db
+      POSTGRES_USER: ${POSTGRES_USER:-taskflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-taskflow_db}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
@@ -22,6 +22,8 @@ services:
     ports:
       - "5341:5341"
       - "8081:80"
+    volumes:
+      - seq-data:/data
     networks:
       - taskflow-network
     restart: always
@@ -32,11 +34,12 @@ services:
       dockerfile: Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=db;Database=taskflow_db;Username=taskflow;Password=password;
+      - CONNECTION_STRING=Host=db;Database=${POSTGRES_DB:-taskflow_db};Username=${POSTGRES_USER:-taskflow};Password=${POSTGRES_PASSWORD:-password};
       - SeqSettings__ServerUrl=http://seq:5341
-      - JwtSettings__Secret=SuperSecretKeyForTaskFlowApplication2026!
-      - JwtSettings__Issuer=TaskFlow
-      - JwtSettings__Audiences__0=FrontendApp
+      - JWT_KEY=${JWT_KEY:-SuperSecretKeyForTaskFlowApplication2026!ThisIsAtLeast32Characters}
+      - JWT_ISSUER=${JWT_ISSUER:-TaskFlow}
+      - JWT_AUDIENCE=${JWT_AUDIENCE:-FrontendApp}
+      - JWT_EXPIRATION_MINUTES=${JWT_EXPIRATION_MINUTES:-1440}
     ports:
       - "5000:8080"
       - "5001:8081"
@@ -54,8 +57,8 @@ services:
     ports:
       - "8080:80"
     environment:
-      - VITE_API_BASE_URL=http://localhost:5000/api
-      - VITE_SIGNALR_HUB_URL=http://localhost:5000/hubs
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:5000/api}
+      - VITE_SIGNALR_HUB_URL=${VITE_SIGNALR_HUB_URL:-http://localhost:5000/hubs}
     networks:
       - taskflow-network
     depends_on:
@@ -68,3 +71,4 @@ networks:
 
 volumes:
   pgdata:
+  seq-data:

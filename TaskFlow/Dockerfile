@@ -12,10 +12,10 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["TaskFlow/TaskFlow.csproj", "TaskFlow/"]
-RUN dotnet restore "./TaskFlow/TaskFlow.csproj"
+COPY ["TaskFlow.csproj", "."]
+RUN dotnet restore "./TaskFlow.csproj"
 COPY . .
-WORKDIR "/src/TaskFlow"
+WORKDIR "/src"
 RUN dotnet build "./TaskFlow.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Этот этап используется для публикации проекта службы, который будет скопирован на последний этап

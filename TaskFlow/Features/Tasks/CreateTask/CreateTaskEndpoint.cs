@@ -8,7 +8,7 @@ using TaskFlow.Features.Tasks.CreateTask;
 namespace TaskFlow.Features.Tasks.CreateTask;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/tasks")]
 [Authorize]
 public class CreateTaskEndpoint : ControllerBase
 {
@@ -24,7 +24,7 @@ public class CreateTaskEndpoint : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<TaskItemDto>> Create(CreateTaskDto dto, CancellationToken cancellationToken)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
             ?? throw new UnauthorizedAccessException("User ID not found in token");
 
         var command = new CreateTaskCommand

@@ -3,16 +3,21 @@ using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.DTOs;
 using TaskFlow.Domain.Entities;
 using TaskFlow.Infrastructure.Persistence;
+using Microsoft.AspNetCore.SignalR;
+using TaskFlow.Hubs;
+using TaskStatus = TaskFlow.Domain.Entities.TaskStatus;
 
 namespace TaskFlow.Features.Tasks.CreateTask;
 
 public class CreateTaskHandler : IRequestHandler<CreateTaskCommand, TaskItemDto>
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly IHubContext<TasksHub> _tasksHub;
 
-    public CreateTaskHandler(ApplicationDbContext dbContext)
+    public CreateTaskHandler(ApplicationDbContext dbContext, IHubContext<TasksHub> tasksHub)
     {
         _dbContext = dbContext;
+        _tasksHub = tasksHub;
     }
 
     public async Task<TaskItemDto> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
@@ -48,7 +53,11 @@ public class CreateTaskHandler : IRequestHandler<CreateTaskCommand, TaskItemDto>
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return MapToDto(taskItem, new List<Tag>(), new List<TaskAttachment>());
+        var dto = MapToDto(taskItem, new List<Tag>(), new List<TaskAttachment>());
+
+        await _tasksHub.Clients.User(request.UserId).SendAsync("TaskCreated", dto, cancellationToken);
+
+        return dto;
     }
 
     private async Task<int> GetNextOrderIndex(string userId, TaskStatus status, CancellationToken cancellationToken)

@@ -1,4 +1,6 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using TaskFlow.Application.DTOs;
 
 namespace TaskFlow.Features.Attachments.UploadAttachment;
 
@@ -40,7 +42,6 @@ public static class UploadAttachmentEndpoint
             return Results.Created($"/api/tasks/{taskId}/attachments/{result.Id}", result);
         })
         .RequireAuthorization()
-        .DisableFormValueReaderLimit()
         .WithOpenApi(operation => new(operation)
         {
             Summary = "Upload attachment to task",

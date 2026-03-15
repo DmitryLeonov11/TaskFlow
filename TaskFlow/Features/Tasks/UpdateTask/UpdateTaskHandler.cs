@@ -3,16 +3,21 @@ using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.DTOs;
 using TaskFlow.Domain.Entities;
 using TaskFlow.Infrastructure.Persistence;
+using Microsoft.AspNetCore.SignalR;
+using TaskFlow.Hubs;
+using TaskStatus = TaskFlow.Domain.Entities.TaskStatus;
 
 namespace TaskFlow.Features.Tasks.UpdateTask;
 
 public class UpdateTaskHandler : IRequestHandler<UpdateTaskCommand, TaskItemDto>
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly IHubContext<TasksHub> _tasksHub;
 
-    public UpdateTaskHandler(ApplicationDbContext dbContext)
+    public UpdateTaskHandler(ApplicationDbContext dbContext, IHubContext<TasksHub> tasksHub)
     {
         _dbContext = dbContext;
+        _tasksHub = tasksHub;
     }
 
     public async Task<TaskItemDto> Handle(UpdateTaskCommand request, CancellationToken cancellationToken)
@@ -58,7 +63,11 @@ public class UpdateTaskHandler : IRequestHandler<UpdateTaskCommand, TaskItemDto>
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return MapToDto(task);
+        var dto = MapToDto(task);
+
+        await _tasksHub.Clients.User(request.UserId).SendAsync("TaskUpdated", dto, cancellationToken);
+
+        return dto;
     }
 
     private static TaskItemDto MapToDto(TaskItem task)
@@ -74,6 +83,7 @@ public class UpdateTaskHandler : IRequestHandler<UpdateTaskCommand, TaskItemDto>
             task.CreatedAt,
             task.UpdatedAt,
             task.TaskTags.Select(tt => new TagDto(tt.Tag.Id, tt.Tag.Name, tt.Tag.Color)).ToList(),
-            task.Comments.Select(c => new TaskCommentDto(c.Id, c.UserId, c.Content, c.CreatedAt)).ToList());
+            task.Comments.Select(c => new TaskCommentDto(c.Id, c.UserId, c.Content, c.CreatedAt)).ToList(),
+            task.Attachments.Select(a => new TaskAttachmentDto(a.Id, a.FileName, a.FileSize, a.UploadedAt)).ToList());
     }
 }
