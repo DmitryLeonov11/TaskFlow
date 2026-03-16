@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 import type { Task } from '../stores/taskStore';
 import TaskCard from './TaskCard.vue';
-import { useDroppable } from '@dnd-kit/vue';
 
 const props = defineProps<{
   title: string;
@@ -13,22 +11,22 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'task-click', task: Task): void;
   (e: 'add-task', status: number): void;
+  (e: 'drop-task', taskId: string, newStatus: number): void;
 }>();
 
-const columnElement = ref<HTMLElement | null>(null);
-const { isDropTarget } = useDroppable({
-  id: `column-${props.status}`,
-  element: columnElement
-});
+const onDrop = (e: DragEvent) => {
+  const taskId = e.dataTransfer?.getData('taskId');
+  if (taskId) {
+    emit('drop-task', taskId, props.status);
+  }
+};
 </script>
 
 <template>
   <div
-    ref="columnElement"
     class="flex flex-col flex-shrink-0 w-80 bg-gray-50 rounded-xl p-3 border border-gray-200 shadow-sm h-full"
-    :class="{
-      'ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-50': isDropTarget
-    }"
+    @dragover.prevent
+    @drop="onDrop"
   >
     <div class="flex items-center justify-between mb-3 px-1">
       <h3 class="font-semibold text-gray-700 flex items-center gap-2">
@@ -37,7 +35,7 @@ const { isDropTarget } = useDroppable({
           {{ tasks.length }}
         </span>
       </h3>
-      <button 
+      <button
         @click="emit('add-task', status)"
         class="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-200 transition-colors"
       >
@@ -50,13 +48,13 @@ const { isDropTarget } = useDroppable({
     <div
       class="flex-1 overflow-y-auto min-h-0 custom-scrollbar space-y-3 p-1"
     >
-      <TaskCard 
-        v-for="task in tasks" 
-        :key="task.id" 
+      <TaskCard
+        v-for="task in tasks"
+        :key="task.id"
         :task="task"
         @click="emit('task-click', task)"
       />
-      
+
       <div v-if="tasks.length === 0" class="h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 text-sm">
         Drag tasks here
       </div>

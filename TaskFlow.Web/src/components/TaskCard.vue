@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import type { Task } from '../stores/taskStore';
-import { useDraggable, useDroppable } from '@dnd-kit/vue';
 
 const props = defineProps<{
   task: Task;
@@ -10,35 +9,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'click'): void;
 }>();
-
-const element = ref<HTMLElement | null>(null);
-
-const draggable = useDraggable({
-  id: props.task.id,
-  element,
-  data: {
-    taskId: props.task.id,
-    status: props.task.status,
-    orderIndex: props.task.orderIndex
-  }
-});
-
-const { isDragging } = draggable;
-
-useDroppable({
-  id: props.task.id,
-  element
-});
-
-const style = computed(() => {
-  const transform = (draggable as any).transform;
-  if (!transform) return {};
-  const { x, y, scaleX = 1, scaleY = 1 } = transform;
-  return {
-    transform: `translate3d(${x}px, ${y}px, 0) scale(${scaleX}, ${scaleY})`,
-    zIndex: isDragging ? 50 : 1
-  };
-});
 
 const priorityColor = computed(() => {
   switch (props.task.priority) {
@@ -64,13 +34,20 @@ const isOverdue = computed(() => {
   if (!props.task.deadline) return false;
   return new Date(props.task.deadline) < new Date();
 });
+
+const onDragStart = (e: DragEvent) => {
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('taskId', props.task.id);
+  }
+};
 </script>
 
 <template>
   <div
-    ref="element"
-    :style="style"
-    class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-grab hover:shadow-md transition-shadow"
+    draggable="true"
+    @dragstart="onDragStart"
+    class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow select-none cursor-grab active:cursor-grabbing"
     @click="emit('click')"
   >
     <div class="flex justify-between items-start mb-2">
@@ -79,7 +56,7 @@ const isOverdue = computed(() => {
         {{ priorityLabel }}
       </span>
     </div>
-    
+
     <p class="text-sm text-gray-600 line-clamp-2 mb-3">
       {{ task.description || 'No description provided.' }}
     </p>
@@ -87,7 +64,9 @@ const isOverdue = computed(() => {
     <div class="flex items-center justify-between text-xs text-gray-500">
       <div class="flex items-center gap-2">
         <span v-if="task.deadline" :class="{'text-red-500 font-medium': isOverdue}">
-          <i class="fas fa-clock mr-1"></i>
+          <svg class="inline-block w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
           {{ new Date(task.deadline).toLocaleDateString() }}
         </span>
       </div>

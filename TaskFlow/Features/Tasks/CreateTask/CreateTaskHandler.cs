@@ -22,15 +22,17 @@ public class CreateTaskHandler : IRequestHandler<CreateTaskCommand, TaskItemDto>
 
     public async Task<TaskItemDto> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
     {
+        var targetStatus = (TaskStatus)(request.Status ?? 0);
+        
         var taskItem = new TaskItem
         {
             Id = Guid.NewGuid(),
             Title = request.Title,
             Description = request.Description,
             Priority = (TaskPriority)request.Priority,
-            Status = TaskStatus.ToDo,
-            Deadline = request.Deadline,
-            OrderIndex = await GetNextOrderIndex(request.UserId, TaskStatus.ToDo, cancellationToken),
+            Status = targetStatus,
+            Deadline = request.Deadline.HasValue ? DateTime.SpecifyKind(request.Deadline.Value, DateTimeKind.Utc) : null,
+            OrderIndex = await GetNextOrderIndex(request.UserId, targetStatus, cancellationToken),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             UserId = request.UserId
@@ -39,6 +41,7 @@ public class CreateTaskHandler : IRequestHandler<CreateTaskCommand, TaskItemDto>
         _dbContext.Tasks.Add(taskItem);
 
         // Add tags if provided
+        List<Tag> addedTags = new();
         if (request.TagIds?.Count > 0)
         {
             var tags = await _dbContext.Tags
@@ -48,12 +51,13 @@ public class CreateTaskHandler : IRequestHandler<CreateTaskCommand, TaskItemDto>
             foreach (var tag in tags)
             {
                 taskItem.TaskTags.Add(new TaskTag { TaskId = taskItem.Id, TagId = tag.Id });
+                addedTags.Add(tag);
             }
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        var dto = MapToDto(taskItem, new List<Tag>(), new List<TaskAttachment>());
+        var dto = MapToDto(taskItem, addedTags, new List<TaskAttachment>());
 
         await _tasksHub.Clients.User(request.UserId).SendAsync("TaskCreated", dto, cancellationToken);
 

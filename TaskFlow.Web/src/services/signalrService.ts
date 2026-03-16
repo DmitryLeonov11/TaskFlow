@@ -20,8 +20,10 @@ class SignalRService {
       .build();
 
     this.connection.on('TaskCreated', (task) => {
-      const taskStore = useTaskStore();
-      taskStore.tasks.push(task);
+      // Disabled: task is added manually in createTask() to avoid duplicates
+      // const taskStore = useTaskStore();
+      // taskStore.tasks.push(task);
+      console.log('[SignalR] TaskCreated event received (ignored):', task.title);
     });
 
     this.connection.on('TaskUpdated', (task) => {

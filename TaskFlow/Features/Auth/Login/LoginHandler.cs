@@ -70,8 +70,20 @@ public class LoginHandler : IRequestHandler<LoginCommand, AuthResponse>
 
     private async Task<string> GenerateJwtToken(ApplicationUser user)
     {
-        var jwtSettings = _configuration.GetSection("JwtSettings");
-        var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? throw new InvalidOperationException("JWT Key not configured"));
+        var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY")
+            ?? _configuration["JwtSettings:Key"]
+            ?? throw new InvalidOperationException("JWT Key not configured");
+        var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER")
+            ?? _configuration["JwtSettings:Issuer"]
+            ?? "TaskFlow";
+        var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+            ?? _configuration["JwtSettings:Audience"]
+            ?? "FrontendApp";
+        var jwtExpiration = int.TryParse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES"), out var exp)
+            ? exp
+            : int.Parse(_configuration["JwtSettings:ExpirationMinutes"] ?? "1440");
+
+        var key = Encoding.ASCII.GetBytes(jwtKey);
 
         var claims = new List<Claim>
         {
@@ -90,9 +102,9 @@ public class LoginHandler : IRequestHandler<LoginCommand, AuthResponse>
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(int.Parse(jwtSettings["ExpirationMinutes"] ?? "60")),
-            Issuer = jwtSettings["Issuer"],
-            Audience = jwtSettings["Audience"],
+            Expires = DateTime.UtcNow.AddMinutes(jwtExpiration),
+            Issuer = jwtIssuer,
+            Audience = jwtAudience,
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(key),
                 SecurityAlgorithms.HmacSha256Signature)

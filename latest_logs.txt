@@ -1,0 +1,50 @@
+[12:03:21 INF] HTTP OPTIONS /hubs/tasks/negotiate responded 204 in 5.3231 ms
+[12:03:21 INF] HTTP OPTIONS /hubs/notifications/negotiate responded 204 in 5.3387 ms
+[12:03:21 INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/hubs/tasks/negotiate?negotiateVersion=1 - 204 null null 106.9568ms
+[12:03:21 INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/hubs/notifications/negotiate?negotiateVersion=1 - 204 null null 106.9704ms
+[12:03:21 INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/hubs/tasks/negotiate?negotiateVersion=1 - 204 null null 106.9568ms
+[12:03:21 INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/hubs/notifications/negotiate?negotiateVersion=1 - 204 null null 106.9704ms
+[12:03:21 INF] Request starting HTTP/1.1 POST http://localhost:5000/hubs/tasks/negotiate?negotiateVersion=1 - null 0
+[12:03:21 INF] Request starting HTTP/1.1 POST http://localhost:5000/hubs/notifications/negotiate?negotiateVersion=1 - null 0
+[12:03:21 INF] Request starting HTTP/1.1 POST http://localhost:5000/hubs/tasks/negotiate?negotiateVersion=1 - null 0
+[12:03:21 INF] Request starting HTTP/1.1 POST http://localhost:5000/hubs/notifications/negotiate?negotiateVersion=1 - null 0
+[12:03:21 INF] CORS policy execution successful.
+[12:03:21 INF] CORS policy execution successful.
+[12:03:21 INF] CORS policy execution successful.
+[12:03:21 INF] CORS policy execution successful.
+[12:03:21 DBG] Authorization header present: Bearer eyJhbGciOiJIU...
+[12:03:21 DBG] Authorization header present: Bearer eyJhbGciOiJIU...
+[12:03:21 DBG] Authorization header present: Bearer eyJhbGciOiJIU...
+[12:03:21 DBG] Authorization header present: Bearer eyJhbGciOiJIU...
+[12:03:21 INF] Executing endpoint '/hubs/notifications/negotiate'
+[12:03:21 INF] Executing endpoint '/hubs/notifications/negotiate'
+[12:03:21 INF] Executing endpoint '/hubs/tasks/negotiate'
+[12:03:21 INF] Executing endpoint '/hubs/tasks/negotiate'
+[12:03:21 INF] Executed endpoint '/hubs/tasks/negotiate'
+[12:03:21 INF] Executed endpoint '/hubs/notifications/negotiate'
+[12:03:21 INF] Executed endpoint '/hubs/tasks/negotiate'
+[12:03:21 INF] Executed endpoint '/hubs/notifications/negotiate'
+[12:03:21 INF] HTTP POST /hubs/notifications/negotiate responded 200 in 90.8783 ms
+[12:03:21 INF] HTTP POST /hubs/tasks/negotiate responded 200 in 90.8024 ms
+[12:03:21 INF] HTTP POST /hubs/notifications/negotiate responded 200 in 90.8783 ms
+[12:03:21 INF] HTTP POST /hubs/tasks/negotiate responded 200 in 90.8024 ms
+[12:03:21 INF] Request finished HTTP/1.1 POST http://localhost:5000/hubs/notifications/negotiate?negotiateVersion=1 - 200 316 application/json 94.0726ms
+[12:03:21 INF] Request finished HTTP/1.1 POST http://localhost:5000/hubs/notifications/negotiate?negotiateVersion=1 - 200 316 application/json 94.0726ms
+[12:03:21 INF] Request finished HTTP/1.1 POST http://localhost:5000/hubs/tasks/negotiate?negotiateVersion=1 - 200 316 application/json 94.8997ms
+[12:03:21 INF] Request finished HTTP/1.1 POST http://localhost:5000/hubs/tasks/negotiate?negotiateVersion=1 - 200 316 application/json 94.8997ms
+[12:03:21 INF] Request starting HTTP/1.1 GET http://localhost:5000/hubs/notifications?id=GGfi6_zTiSePhBdwmgp2uQ&access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJmNWFjOWNkZC02MGFmLTQwMzctYjZmMi00YjVjZjliOTE4N2EiLCJlbWFpbCI6ImRsZW9ub3Y3MDFAZ21haWwuY29tIiwiRmlyc3ROYW1lIjoiRHptaXRyeSIsIkxhc3ROYW1lIjoiTGlhdm9uYXUiLCJyb2xlIjoiVXNlciIsIm5iZiI6MTc3MzY2MjIwNSwiZXhwIjoxNzczNzQ4NjA1LCJpYXQiOjE3NzM2NjIyMDUsImlzcyI6IlRhc2tGbG93IiwiYXVkIjoiRnJvbnRlbmRBcHAifQ.xGAmTC7uKFxVn2oa0s5KITRDypgu7jE2_VbS7Why6q8 - null null
+[12:03:21 INF] Request starting HTTP/1.1 GET http://localhost:5000/hubs/notifications?id=GGfi6_zTiSePhBdwmgp2uQ&access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJmNWFjOWNkZC02MGFmLTQwMzctYjZmMi00YjVjZjliOTE4N2EiLCJlbWFpbCI6ImRsZW9ub3Y3MDFAZ21haWwuY29tIiwiRmlyc3ROYW1lIjoiRHptaXRyeSIsIkxhc3ROYW1lIjoiTGlhdm9uYXUiLCJyb2xlIjoiVXNlciIsIm5iZiI6MTc3MzY2MjIwNSwiZXhwIjoxNzczNzQ4NjA1LCJpYXQiOjE3NzM2NjIyMDUsImlzcyI6IlRhc2tGbG93IiwiYXVkIjoiRnJvbnRlbmRBcHAifQ.xGAmTC7uKFxVn2oa0s5KITRDypgu7jE2_VbS7Why6q8 - null null
+[12:03:21 INF] CORS policy execution successful.
+[12:03:21 INF] CORS policy execution successful.
+[12:03:21 DBG] Token received from query string for SignalR
+[12:03:21 DBG] Token received from query string for SignalR
+[12:03:21 INF] Executing endpoint '/hubs/notifications'
+[12:03:21 INF] Executing endpoint '/hubs/notifications'
+[12:03:21 INF] Request starting HTTP/1.1 GET http://localhost:5000/hubs/tasks?id=9nkP9B9aYdtMLCjee3VTmg&access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJmNWFjOWNkZC02MGFmLTQwMzctYjZmMi00YjVjZjliOTE4N2EiLCJlbWFpbCI6ImRsZW9ub3Y3MDFAZ21haWwuY29tIiwiRmlyc3ROYW1lIjoiRHptaXRyeSIsIkxhc3ROYW1lIjoiTGlhdm9uYXUiLCJyb2xlIjoiVXNlciIsIm5iZiI6MTc3MzY2MjIwNSwiZXhwIjoxNzczNzQ4NjA1LCJpYXQiOjE3NzM2NjIyMDUsImlzcyI6IlRhc2tGbG93IiwiYXVkIjoiRnJvbnRlbmRBcHAifQ.xGAmTC7uKFxVn2oa0s5KITRDypgu7jE2_VbS7Why6q8 - null null
+[12:03:21 INF] Request starting HTTP/1.1 GET http://localhost:5000/hubs/tasks?id=9nkP9B9aYdtMLCjee3VTmg&access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJmNWFjOWNkZC02MGFmLTQwMzctYjZmMi00YjVjZjliOTE4N2EiLCJlbWFpbCI6ImRsZW9ub3Y3MDFAZ21haWwuY29tIiwiRmlyc3ROYW1lIjoiRHptaXRyeSIsIkxhc3ROYW1lIjoiTGlhdm9uYXUiLCJyb2xlIjoiVXNlciIsIm5iZiI6MTc3MzY2MjIwNSwiZXhwIjoxNzczNzQ4NjA1LCJpYXQiOjE3NzM2NjIyMDUsImlzcyI6IlRhc2tGbG93IiwiYXVkIjoiRnJvbnRlbmRBcHAifQ.xGAmTC7uKFxVn2oa0s5KITRDypgu7jE2_VbS7Why6q8 - null null
+[12:03:21 INF] CORS policy execution successful.
+[12:03:21 INF] CORS policy execution successful.
+[12:03:21 DBG] Token received from query string for SignalR
+[12:03:21 DBG] Token received from query string for SignalR
+[12:03:21 INF] Executing endpoint '/hubs/tasks'
+[12:03:21 INF] Executing endpoint '/hubs/tasks'

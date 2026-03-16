@@ -17,6 +17,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Load environment variables from .env file (if exists)
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", ".env");
+if (!File.Exists(envPath))
+{
+    envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+}
+
 if (File.Exists(envPath))
 {
     var envVars = File.ReadAllLines(envPath)
@@ -29,6 +34,13 @@ if (File.Exists(envPath))
     {
         Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
     }
+    
+    Log.Logger.Information(".env loaded from {Path}, JWT_KEY present: {HasJwt}", envPath, 
+        !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JWT_KEY")));
+}
+else
+{
+    Log.Logger.Warning(".env file not found. Checked: {Path}", envPath);
 }
 
 // Serilog
@@ -71,20 +83,23 @@ builder.Services
     .AddDefaultTokenProviders();
 
 // JWT Authentication
-var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") 
-    ?? builder.Configuration["JwtSettings:Key"] 
+var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY")
+    ?? builder.Configuration["JwtSettings:Key"]
     ?? throw new InvalidOperationException("JWT Key not configured");
-var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") 
-    ?? builder.Configuration["JwtSettings:Issuer"] 
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER")
+    ?? builder.Configuration["JwtSettings:Issuer"]
     ?? "TaskFlow";
-var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") 
-    ?? builder.Configuration["JwtSettings:Audience"] 
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+    ?? builder.Configuration["JwtSettings:Audience"]
     ?? "FrontendApp";
-var jwtExpiration = int.TryParse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES"), out var exp) 
-    ? exp 
+var jwtExpiration = int.TryParse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES"), out var exp)
+    ? exp
     : 1440;
 
 var key = Encoding.ASCII.GetBytes(jwtKey);
+
+Log.Logger.Information("JWT Configured: Key length={KeyLen}, Issuer={Issuer}, Audience={Audience}, Expiration={Exp}min", 
+    jwtKey.Length, jwtIssuer, jwtAudience, jwtExpiration);
 
 builder.Services
     .AddAuthentication(options =>
@@ -107,6 +122,11 @@ builder.Services
         };
         options.Events = new JwtBearerEvents
         {
+            OnAuthenticationFailed = context =>
+            {
+                Log.Logger.Warning(context.Exception, "JWT Authentication failed");
+                return Task.CompletedTask;
+            },
             OnMessageReceived = context =>
             {
                 var accessToken = context.Request.Query["access_token"];
@@ -114,6 +134,15 @@ builder.Services
                 if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
                 {
                     context.Token = accessToken;
+                    Log.Logger.Debug("Token received from query string for SignalR");
+                }
+                else if (context.Request.Headers.ContainsKey("Authorization"))
+                {
+                    Log.Logger.Debug("Authorization header present: {Header}", context.Request.Headers["Authorization"].ToString().Substring(0, 20) + "...");
+                }
+                else
+                {
+                    Log.Logger.Debug("No Authorization header for {Path}", path);
                 }
                 return Task.CompletedTask;
             }
@@ -130,7 +159,8 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:8080")
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials()
+            .WithExposedHeaders("Content-Disposition");
     });
 });
 

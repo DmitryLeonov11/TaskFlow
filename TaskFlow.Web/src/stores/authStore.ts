@@ -36,6 +36,7 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem('auth_user', JSON.stringify(userData));
         token.value = accessToken;
         user.value = userData;
+        console.log('[Auth] Token saved:', accessToken ? 'YES (length: ' + accessToken.length + ')' : 'NO');
     };
 
     const login = async (credentials: any) => {

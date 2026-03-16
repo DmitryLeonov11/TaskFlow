@@ -3,7 +3,6 @@ import { onMounted, ref } from 'vue';
 import { useTaskStore, type Task } from '../stores/taskStore';
 import KanbanColumn from '../components/KanbanColumn.vue';
 import TaskForm from '../components/TaskForm.vue';
-import { DragDropProvider } from '@dnd-kit/vue';
 
 const taskStore = useTaskStore();
 const isFormOpen = ref(false);
@@ -33,7 +32,6 @@ const openNewTaskForm = (status: number = 0) => {
 };
 
 const handleSaveTask = async (taskData: Partial<Task>) => {
-  console.log('handleSaveTask called with:', taskData, 'editingTask:', editingTask.value);
   try {
     if (editingTask.value) {
       await taskStore.updateTask(editingTask.value.id, taskData);
@@ -43,7 +41,7 @@ const handleSaveTask = async (taskData: Partial<Task>) => {
     isFormOpen.value = false;
   } catch (error) {
     console.error('Error saving task:', error);
-    alert('Failed to save task. Please check your authentication and try again.');
+    alert('Failed to save task.');
   }
 };
 
@@ -51,31 +49,25 @@ const closeForm = () => {
   isFormOpen.value = false;
 };
 
-const handleTaskDrop = async (event: any) => {
-  const active = event.active;
-  const over = event.over;
-  if (!active || !over) return;
+const handleDropTask = async (taskId: string, newStatus: number) => {
+  const task = taskStore.tasks.find(t => t.id === taskId);
+  if (!task) return;
 
-  const { taskId } = active.data.current ?? {};
-  if (!taskId) return;
+  // Calculate new order index (put at the end of the column for simplicity)
+  const columnTasks = taskStore.tasks.filter(t => t.status === newStatus);
+  const newOrderIndex = columnTasks.length;
 
-  let newStatus: number;
-  let newOrderIndex: number;
-
-  if (typeof over.id === 'string' && over.id.startsWith('column-')) {
-    // Бросили в пустое место колонки – кладём в конец этой колонки
-    newStatus = Number(over.id.replace('column-', ''));
-    const columnTasks = taskStore.getTasksForStatus(newStatus);
-    newOrderIndex = columnTasks.length;
-  } else {
-    // Бросили на другую задачу – берём её статус и индекс
-    const targetTask = taskStore.tasks.find((t) => t.id === over.id);
-    if (!targetTask) return;
-    newStatus = targetTask.status;
-    newOrderIndex = targetTask.orderIndex;
+  if (task.status !== newStatus || task.orderIndex !== newOrderIndex) {
+    // Optimistic update
+    task.status = newStatus;
+    task.orderIndex = newOrderIndex;
+    try {
+      await taskStore.moveTask(taskId, newStatus, newOrderIndex);
+    } catch (err) {
+      // Refresh tasks if API fails
+      await taskStore.fetchTasks();
+    }
   }
-
-  await taskStore.moveTask(taskId, newStatus, newOrderIndex);
 };
 </script>
 
@@ -86,7 +78,7 @@ const handleTaskDrop = async (event: any) => {
         <h1 class="text-2xl font-bold text-gray-800">Board</h1>
         <p class="text-sm text-gray-500 mt-1">Manage your team's tasks</p>
       </div>
-      <button 
+      <button
         @click="openNewTaskForm(0)"
         class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2"
       >
@@ -98,29 +90,28 @@ const handleTaskDrop = async (event: any) => {
     </header>
 
     <div class="flex-1 overflow-x-auto p-6">
-      <DragDropProvider @dragEnd="handleTaskDrop">
-        <div v-if="taskStore.loading" class="flex justify-center items-center h-full">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-        
-        <div v-else class="flex gap-6 h-full items-start">
-          <KanbanColumn 
-            v-for="column in columns" 
-            :key="column.id"
-            :title="column.title"
-            :status="column.id"
-            :tasks="taskStore.getTasksForStatus(column.id)"
-            @task-click="handleTaskClick"
-            @add-task="openNewTaskForm"
-          />
-        </div>
-      </DragDropProvider>
+      <div v-if="taskStore.loading" class="flex justify-center items-center h-full">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+
+      <div v-else class="flex gap-6 h-full items-start">
+        <KanbanColumn
+          v-for="column in columns"
+          :key="column.id"
+          :title="column.title"
+          :status="column.id"
+          :tasks="taskStore.tasks.filter(t => t.status === column.id).sort((a,b) => a.orderIndex - b.orderIndex)"
+          @task-click="handleTaskClick"
+          @add-task="openNewTaskForm"
+          @drop-task="handleDropTask"
+        />
+      </div>
     </div>
 
     <!-- Modal Form Layer -->
     <div v-if="isFormOpen" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div class="w-full max-w-lg">
-        <TaskForm 
+        <TaskForm
           :initial-data="editingTask ? { ...editingTask } : { status: defaultStatusForNew }"
           :is-editing="!!editingTask"
           @save="handleSaveTask"
