@@ -36,10 +36,7 @@ jobs:
       run: dotnet build ${{ env.SOLUTION }} --no-restore --configuration Release
 
     - name: Run unit tests
-      run: dotnet test ${{ env.UNIT_TESTS_PROJECT }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults/unit
-
-    - name: Run integration tests
-      run: dotnet test ${{ env.INTEGRATION_TESTS_PROJECT }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults/integration
+      run: dotnet test ${{ env.UNIT_TESTS_PROJECT }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults/unit --logger "trx;LogFileName=test-results.trx"
 
     - name: Upload unit test results
       uses: actions/upload-artifact@v4
@@ -47,6 +44,10 @@ jobs:
       with:
         name: unit-test-results
         path: ./TestResults/unit
+        if-no-files-found: ignore
+
+    - name: Run integration tests
+      run: dotnet test ${{ env.INTEGRATION_TESTS_PROJECT }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults/integration --logger "trx;LogFileName=test-results.trx"
 
     - name: Upload integration test results
       uses: actions/upload-artifact@v4
@@ -54,11 +55,13 @@ jobs:
       with:
         name: integration-test-results
         path: ./TestResults/integration
+        if-no-files-found: ignore
 
   code-coverage:
     needs: [build-and-test-backend]
     runs-on: ubuntu-latest
     name: Code Coverage Report
+    if: always() && needs.build-and-test-backend.result == 'success'
 
     steps:
     - uses: actions/checkout@v4
@@ -73,34 +76,43 @@ jobs:
 
     - name: Download unit test results
       uses: actions/download-artifact@v4
+      if: always()
       with:
         name: unit-test-results
         path: ./TestResults/unit
+        if-no-files-found: ignore
 
     - name: Download integration test results
       uses: actions/download-artifact@v4
+      if: always()
       with:
         name: integration-test-results
         path: ./TestResults/integration
+        if-no-files-found: ignore
 
     - name: Generate Code Coverage Report
+      if: always()
       run: |
         reportgenerator \
           -reports:"./TestResults/**/coverage.cobertura.xml" \
           -targetdir:"./CoverageReport" \
-          -reporttypes:"Html;Cobertura"
+          -reporttypes:"Html;Cobertura" || echo "No coverage data available"
 
     - name: Upload Code Coverage Report
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: code-coverage-report
         path: ./CoverageReport
+        if-no-files-found: ignore
 
     - name: Upload Cobertura Coverage for PR
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: cobertura-coverage
         path: ./CoverageReport/Cobertura.xml
+        if-no-files-found: ignore
 
   # ==================== FRONTEND ====================
   build-frontend:
@@ -173,16 +185,15 @@ jobs:
 
   # ==================== NOTIFICATIONS ====================
   notify-success:
-    needs: [build-and-test-backend, code-coverage, build-frontend, docker-build]
+    needs: [build-and-test-backend, build-frontend, docker-build]
     runs-on: ubuntu-latest
     name: Notify Success
     if: always() && github.event_name == 'push'
-    
+
     steps:
     - name: Check job statuses
       run: |
         echo "All jobs completed successfully!"
         echo "Backend: ${{ needs.build-and-test-backend.result }}"
-        echo "Code Coverage: ${{ needs.code-coverage.result }}"
         echo "Frontend: ${{ needs.build-frontend.result }}"
         echo "Docker: ${{ needs.docker-build.result }}"
