@@ -80,7 +80,6 @@ jobs:
       with:
         name: unit-test-results
         path: ./TestResults/unit
-        if-no-files-found: ignore
 
     - name: Download integration test results
       uses: actions/download-artifact@v4
@@ -88,7 +87,6 @@ jobs:
       with:
         name: integration-test-results
         path: ./TestResults/integration
-        if-no-files-found: ignore
 
     - name: Generate Code Coverage Report
       if: always()
