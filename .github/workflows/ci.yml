@@ -171,32 +171,6 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-  # ==================== DEPLOYMENT ====================
-  deploy-staging:
-    needs: [docker-build]
-    runs-on: ubuntu-latest
-    name: Deploy to Staging
-    if: github.ref == 'refs/heads/develop'
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Deploy to Staging
-      run: echo "Deploying to staging environment..."
-
-  deploy-production:
-    needs: [docker-build]
-    runs-on: ubuntu-latest
-    name: Deploy to Production
-    if: github.ref == 'refs/heads/master'
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Deploy to Production
-      run: echo "Deploying to production environment..."
-
-
   # ==================== NOTIFICATIONS ====================
   notify-success:
     needs: [build-and-test-backend, code-coverage, build-frontend, docker-build]
