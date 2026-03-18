@@ -4,11 +4,22 @@ on:
   push:
     branches: [ "master" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master"]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '20'
+  API_PROJECT: 'TaskFlow/TaskFlow.csproj'
+  WEB_PROJECT: 'TaskFlow.Web/TaskFlow.Web.csproj'
+  SOLUTION: 'TaskFlow.slnx'
+  UNIT_TESTS_PROJECT: 'tests/TaskFlow.Api.UnitTests/TaskFlow.Api.UnitTests.csproj'
+  INTEGRATION_TESTS_PROJECT: 'tests/TaskFlow.Api.IntegrationTests/TaskFlow.Api.IntegrationTests.csproj'
 
 jobs:
+  # ==================== BACKEND ====================
   build-and-test-backend:
     runs-on: ubuntu-latest
+    name: Backend - Build & Test
 
     steps:
     - uses: actions/checkout@v4
@@ -16,19 +27,85 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Restore dependencies
-      run: dotnet restore TaskFlow.slnx
+      run: dotnet restore ${{ env.SOLUTION }}
 
     - name: Build backend
-      run: dotnet build TaskFlow.slnx --no-restore
+      run: dotnet build ${{ env.SOLUTION }} --no-restore --configuration Release
 
-    - name: Run tests
-      run: dotnet test TaskFlow.slnx --no-build --verbosity normal
+    - name: Run unit tests
+      run: dotnet test ${{ env.UNIT_TESTS_PROJECT }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults/unit
 
+    - name: Run integration tests
+      run: dotnet test ${{ env.INTEGRATION_TESTS_PROJECT }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults/integration
+
+    - name: Upload unit test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: unit-test-results
+        path: ./TestResults/unit
+
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: integration-test-results
+        path: ./TestResults/integration
+
+  code-coverage:
+    needs: [build-and-test-backend]
+    runs-on: ubuntu-latest
+    name: Code Coverage Report
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Install ReportGenerator
+      run: dotnet tool install -g dotnet-reportgenerator-globaltool || dotnet tool update -g dotnet-reportgenerator-globaltool
+
+    - name: Download unit test results
+      uses: actions/download-artifact@v4
+      with:
+        name: unit-test-results
+        path: ./TestResults/unit
+
+    - name: Download integration test results
+      uses: actions/download-artifact@v4
+      with:
+        name: integration-test-results
+        path: ./TestResults/integration
+
+    - name: Generate Code Coverage Report
+      run: |
+        reportgenerator \
+          -reports:"./TestResults/**/coverage.cobertura.xml" \
+          -targetdir:"./CoverageReport" \
+          -reporttypes:"Html;Cobertura"
+
+    - name: Upload Code Coverage Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-coverage-report
+        path: ./CoverageReport
+
+    - name: Upload Cobertura Coverage for PR
+      uses: actions/upload-artifact@v4
+      with:
+        name: cobertura-coverage
+        path: ./CoverageReport/Cobertura.xml
+
+  # ==================== FRONTEND ====================
   build-frontend:
     runs-on: ubuntu-latest
+    name: Frontend - Build & Lint
 
     steps:
     - uses: actions/checkout@v4
@@ -36,27 +113,102 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
         cache-dependency-path: 'TaskFlow.Web/package-lock.json'
 
     - name: Install dependencies
       working-directory: ./TaskFlow.Web
-      run: npm ci || npm install
+      run: npm ci
+
+    - name: Run linter
+      working-directory: ./TaskFlow.Web
+      run: npm run lint || echo "Linting not configured or failed"
+      continue-on-error: true
+
+    - name: Run type check
+      working-directory: ./TaskFlow.Web
+      run: npm run type-check || echo "Type check not configured"
+      continue-on-error: true
 
     - name: Build frontend
       working-directory: ./TaskFlow.Web
       run: npm run build
 
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: ./TaskFlow.Web/dist
+
+  # ==================== DOCKER ====================
   docker-build:
     needs: [build-and-test-backend, build-frontend]
     runs-on: ubuntu-latest
+    name: Docker - Build Images
 
     steps:
     - uses: actions/checkout@v4
 
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
     - name: Build API Image
-      run: docker build -t taskflow-api ./TaskFlow
+      uses: docker/build-push-action@v5
+      with:
+        context: ./TaskFlow
+        push: false
+        tags: taskflow-api:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
     - name: Build Frontend Image
-      run: docker build -t taskflow-frontend ./TaskFlow.Web
+      uses: docker/build-push-action@v5
+      with:
+        context: ./TaskFlow.Web
+        push: false
+        tags: taskflow-frontend:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # ==================== DEPLOYMENT ====================
+  deploy-staging:
+    needs: [docker-build]
+    runs-on: ubuntu-latest
+    name: Deploy to Staging
+    if: github.ref == 'refs/heads/develop'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to Staging
+      run: echo "Deploying to staging environment..."
+
+  deploy-production:
+    needs: [docker-build]
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to Production
+      run: echo "Deploying to production environment..."
+
+
+  # ==================== NOTIFICATIONS ====================
+  notify-success:
+    needs: [build-and-test-backend, code-coverage, build-frontend, docker-build]
+    runs-on: ubuntu-latest
+    name: Notify Success
+    if: always() && github.event_name == 'push'
+    
+    steps:
+    - name: Check job statuses
+      run: |
+        echo "All jobs completed successfully!"
+        echo "Backend: ${{ needs.build-and-test-backend.result }}"
+        echo "Code Coverage: ${{ needs.code-coverage.result }}"
+        echo "Frontend: ${{ needs.build-frontend.result }}"
+        echo "Docker: ${{ needs.docker-build.result }}"

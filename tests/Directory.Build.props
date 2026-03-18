@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <CollectCoverage>true</CollectCoverage>
+    <CoverletOutputFormat>cobertura,json</CoverletOutputFormat>
+    <CoverletOutput>$(MSBuildThisFileDirectory)TestResults/coverage.cobertura.xml</CoverletOutput>
+    <Exclude>[xunit.*]*,[*.Test*]*,[FluentAssertions]*,[Moq]*</Exclude>
+  </PropertyGroup>
+</Project>

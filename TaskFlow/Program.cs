@@ -13,7 +13,16 @@ using TaskFlow.Hubs;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.Features;
 
-var builder = WebApplication.CreateBuilder(args);
+public class Program
+{
+    public static async Task Main(string[] args)
+    {
+        await RunAsync(args);
+    }
+
+    public static async Task RunAsync(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
 
 // Load environment variables from .env file (if exists)
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", ".env");
@@ -174,7 +183,10 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddValidatorsFromAssemblyContaining<TaskFlowMarker>();
 
 // AutoMapper
-builder.Services.AddAutoMapper(typeof(TaskFlowMarker).Assembly);
+builder.Services.AddAutoMapper(config =>
+{
+    config.AddMaps(typeof(TaskFlowMarker).Assembly);
+});
 
 // SignalR
 builder.Services.AddSignalR(options =>
@@ -306,4 +318,6 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+    }
+}
 }

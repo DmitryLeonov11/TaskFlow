@@ -44,7 +44,7 @@
     <PackageReference Include="Serilog.Sinks.Seq" Version="9.0.0" />
 
     <!-- Utilities -->
-    <PackageReference Include="AutoMapper" Version="14.0.0" />
+    <PackageReference Include="AutoMapper" Version="16.1.1" />
 
     <!-- Testcontainers for Integration Tests -->
     <PackageReference Include="Testcontainers" Version="4.2.0" />
