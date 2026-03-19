@@ -28,4 +28,3 @@ public class ResetPasswordValidator : AbstractValidator<ResetPasswordCommand>
             .MinimumLength(8);
     }
 }
-

@@ -9,7 +9,7 @@ public class TaskAttachment
     public required string ContentType { get; set; }
     public long FileSize { get; set; }
     public DateTime UploadedAt { get; set; }
-    
+
     // Navigation properties
     public TaskItem Task { get; set; } = null!;
 }

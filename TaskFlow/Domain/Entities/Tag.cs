@@ -7,7 +7,7 @@ public class Tag
     public required string UserId { get; set; }
     public string? Color { get; set; }
     public DateTime CreatedAt { get; set; }
-    
+
     // Navigation properties
     public ICollection<TaskTag> TaskTags { get; set; } = new List<TaskTag>();
 }

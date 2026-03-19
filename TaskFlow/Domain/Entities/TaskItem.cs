@@ -28,7 +28,7 @@ public class TaskItem
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public required string UserId { get; set; }
-    
+
     // Navigation properties
     public ICollection<TaskTag> TaskTags { get; set; } = new List<TaskTag>();
     public ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();

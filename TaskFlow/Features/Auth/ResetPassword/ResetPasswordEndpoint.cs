@@ -43,4 +43,3 @@ public static class ResetPasswordEndpoint
         .Produces(StatusCodes.Status400BadRequest);
     }
 }
-

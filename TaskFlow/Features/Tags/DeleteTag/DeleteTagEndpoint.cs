@@ -1,6 +1,6 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MediatR;
 using System.Security.Claims;
 
 namespace TaskFlow.Features.Tags.DeleteTag;

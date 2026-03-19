@@ -8,7 +8,7 @@ public class TaskComment
     public required string Content { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
-    
+
     // Navigation properties
     public TaskItem Task { get; set; } = null!;
 }

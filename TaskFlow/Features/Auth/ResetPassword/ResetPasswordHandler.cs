@@ -55,9 +55,8 @@ public class ResetPasswordHandler : IRequestHandler<ResetPasswordCommand>
         var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
         if (!result.Succeeded)
         {
-          var errors = string.Join("; ", result.Errors.Select(e => e.Description));
-          throw new InvalidOperationException($"Failed to reset password: {errors}");
+            var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+            throw new InvalidOperationException($"Failed to reset password: {errors}");
         }
     }
 }
-

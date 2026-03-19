@@ -365,3 +365,7 @@ FodyWeavers.xsd
 # Environment variables (contains sensitive data)
 .env
 !.env.example
+seq_err.txt
+seq_logs.txt
+.gitignore
+seq_out.txt

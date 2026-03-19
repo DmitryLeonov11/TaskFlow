@@ -1,10 +1,10 @@
 using MediatR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.DTOs;
 using TaskFlow.Domain.Entities;
-using TaskFlow.Infrastructure.Persistence;
-using Microsoft.AspNetCore.SignalR;
 using TaskFlow.Hubs;
+using TaskFlow.Infrastructure.Persistence;
 using TaskStatus = TaskFlow.Domain.Entities.TaskStatus;
 
 namespace TaskFlow.Features.Tasks.MoveTask;

@@ -1,10 +1,10 @@
 using MediatR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.DTOs;
 using TaskFlow.Domain.Entities;
-using TaskFlow.Infrastructure.Persistence;
 using TaskFlow.Hubs;
-using Microsoft.AspNetCore.SignalR;
+using TaskFlow.Infrastructure.Persistence;
 
 namespace TaskFlow.Features.Comments.CreateComment;
 
