@@ -42,7 +42,7 @@ public class UpdateTaskHandler : IRequestHandler<UpdateTaskCommand, TaskItemDto>
             task.Status = (TaskStatus)request.Status.Value;
 
         if (request.Deadline != null)
-            task.Deadline = request.Deadline;
+            task.Deadline = DateTime.SpecifyKind(request.Deadline.Value, DateTimeKind.Utc);
 
         task.UpdatedAt = DateTime.UtcNow;
 
@@ -51,13 +51,16 @@ public class UpdateTaskHandler : IRequestHandler<UpdateTaskCommand, TaskItemDto>
         {
             _dbContext.TaskTags.RemoveRange(task.TaskTags);
 
-            var tags = await _dbContext.Tags
-                .Where(t => request.TagIds.Contains(t.Id) && t.UserId == request.UserId)
-                .ToListAsync(cancellationToken);
-
-            foreach (var tag in tags)
+            if (request.TagIds.Count > 0)
             {
-                task.TaskTags.Add(new TaskTag { TaskId = task.Id, TagId = tag.Id });
+                var tags = await _dbContext.Tags
+                    .Where(t => request.TagIds.Contains(t.Id) && t.UserId == request.UserId)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var tag in tags)
+                {
+                    task.TaskTags.Add(new TaskTag { TaskId = task.Id, TagId = tag.Id });
+                }
             }
         }
 
