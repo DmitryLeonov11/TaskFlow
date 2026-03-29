@@ -12,20 +12,31 @@ onMounted(async () => {
   await taskStore.fetchTasks();
 });
 
-// Filter tasks due today or overdue
 const todayTasks = computed(() => {
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  
   const todayEnd = new Date();
   todayEnd.setHours(23, 59, 59, 999);
 
-  return taskStore.tasks.filter(t => {
-    if (!t.deadline) return false;
-    const dl = new Date(t.deadline);
-    // Overdue or due today
-    return dl <= todayEnd && t.status !== 3; // Not done
-  });
+  return taskStore.tasks
+    .filter(t => {
+      if (!t.deadline) return false;
+      const dl = new Date(t.deadline);
+      return dl <= todayEnd && t.status !== 3; // not Done
+    })
+    .sort((a, b) => {
+      const da = new Date(a.deadline!).getTime();
+      const db = new Date(b.deadline!).getTime();
+      return da - db;
+    });
+});
+
+const overdueTasks = computed(() =>
+  todayTasks.value.filter(t => new Date(t.deadline!) < new Date())
+);
+
+const dueTodayTasks = computed(() => {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  return todayTasks.value.filter(t => new Date(t.deadline!) >= todayStart);
 });
 
 const handleTaskClick = (task: Task) => {
@@ -33,7 +44,7 @@ const handleTaskClick = (task: Task) => {
   isFormOpen.value = true;
 };
 
-const handleSaveTask = async (taskData: Partial<Task>) => {
+const handleSaveTask = async (taskData: any) => {
   try {
     if (editingTask.value) {
       await taskStore.updateTask(editingTask.value.id, taskData);
@@ -43,50 +54,89 @@ const handleSaveTask = async (taskData: Partial<Task>) => {
     isFormOpen.value = false;
   } catch (error) {
     console.error('Error saving task:', error);
-    alert('Failed to save task. Please check your authentication and try again.');
+    alert('Failed to save task.');
+  }
+};
+
+const handleDeleteTask = async (id: string) => {
+  try {
+    await taskStore.deleteTask(id);
+    isFormOpen.value = false;
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    alert('Failed to delete task.');
   }
 };
 </script>
 
 <template>
-  <div class="h-full bg-slate-50 p-6 overflow-y-auto">
-    <div class="max-w-4xl mx-auto">
-      <header class="mb-8 flex items-end justify-between">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 mb-2">Today</h1>
-          <p class="text-gray-500">{{ new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) }}</p>
-        </div>
+  <div class="h-full bg-slate-50 overflow-y-auto">
+    <div class="max-w-3xl mx-auto px-6 py-8">
+      <header class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-1">Today</h1>
+        <p class="text-gray-500 text-sm">
+          {{ new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) }}
+        </p>
       </header>
 
       <div v-if="taskStore.loading" class="flex justify-center py-12">
         <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
       </div>
-      
-      <div v-else-if="todayTasks.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center text-gray-500">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        <h3 class="text-lg font-medium text-gray-900 mb-1">You're all caught up!</h3>
-        <p>No tasks due today. Enjoy your day or plan ahead.</p>
-      </div>
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <TaskCard 
-          v-for="task in todayTasks" 
-          :key="task.id" 
-          :task="task" 
-          @click="handleTaskClick(task)"
-        />
-      </div>
+      <template v-else-if="todayTasks.length === 0">
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 mx-auto mb-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h3 class="text-base font-semibold text-gray-900 mb-1">All caught up!</h3>
+          <p class="text-sm text-gray-400">No tasks due today. Enjoy your day.</p>
+        </div>
+      </template>
+
+      <template v-else>
+        <!-- Overdue section -->
+        <div v-if="overdueTasks.length" class="mb-6">
+          <h2 class="text-xs font-semibold text-red-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            Overdue ({{ overdueTasks.length }})
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <TaskCard
+              v-for="task in overdueTasks"
+              :key="task.id"
+              :task="task"
+              @click="handleTaskClick(task)"
+            />
+          </div>
+        </div>
+
+        <!-- Due today section -->
+        <div v-if="dueTodayTasks.length">
+          <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            Due Today ({{ dueTodayTasks.length }})
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <TaskCard
+              v-for="task in dueTodayTasks"
+              :key="task.id"
+              :task="task"
+              @click="handleTaskClick(task)"
+            />
+          </div>
+        </div>
+      </template>
     </div>
 
-    <!-- Modal Form Layer -->
-    <div v-if="isFormOpen" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <!-- Modal -->
+    <div v-if="isFormOpen" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="isFormOpen = false">
       <div class="w-full max-w-lg">
-        <TaskForm 
+        <TaskForm
           :initial-data="editingTask ? { ...editingTask } : {}"
           :is-editing="!!editingTask"
           @save="handleSaveTask"
+          @delete="handleDeleteTask"
           @cancel="isFormOpen = false"
         />
       </div>

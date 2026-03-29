@@ -23,6 +23,7 @@ public class GetTasksEndpoint : ControllerBase
     public async Task<ActionResult<GetTasksResponse>> GetTasks(
         [FromQuery] int? status = null,
         [FromQuery] string? searchTerm = null,
+        [FromQuery] List<Guid>? tagIds = null,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
@@ -35,6 +36,7 @@ public class GetTasksEndpoint : ControllerBase
             UserId = userId,
             Status = status,
             SearchTerm = searchTerm,
+            TagIds = tagIds?.Count > 0 ? tagIds : null,
             PageNumber = pageNumber,
             PageSize = pageSize
         };

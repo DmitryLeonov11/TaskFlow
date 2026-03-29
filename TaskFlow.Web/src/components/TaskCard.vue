@@ -10,29 +10,24 @@ const emit = defineEmits<{
   (e: 'click'): void;
 }>();
 
-const priorityColor = computed(() => {
-  switch (props.task.priority) {
-    case 0: return 'bg-gray-100 text-gray-800';
-    case 1: return 'bg-blue-100 text-blue-800';
-    case 2: return 'bg-orange-100 text-orange-800';
-    case 3: return 'bg-red-100 text-red-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
-});
-
-const priorityLabel = computed(() => {
-  switch (props.task.priority) {
-    case 0: return 'Low';
-    case 1: return 'Medium';
-    case 2: return 'High';
-    case 3: return 'Urgent';
-    default: return 'Unknown';
-  }
+const priorityConfig = computed(() => {
+  const configs = [
+    { label: 'Low',    classes: 'bg-gray-100 text-gray-600' },
+    { label: 'Medium', classes: 'bg-blue-100 text-blue-700' },
+    { label: 'High',   classes: 'bg-orange-100 text-orange-700' },
+    { label: 'Urgent', classes: 'bg-red-100 text-red-700' },
+  ];
+  return configs[props.task.priority] ?? configs[0];
 });
 
 const isOverdue = computed(() => {
   if (!props.task.deadline) return false;
   return new Date(props.task.deadline) < new Date();
+});
+
+const formattedDeadline = computed(() => {
+  if (!props.task.deadline) return null;
+  return new Date(props.task.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 });
 
 const onDragStart = (e: DragEvent) => {
@@ -47,31 +42,64 @@ const onDragStart = (e: DragEvent) => {
   <div
     draggable="true"
     @dragstart="onDragStart"
-    class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow select-none cursor-grab active:cursor-grabbing"
+    class="bg-white p-3.5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all select-none cursor-grab active:cursor-grabbing group"
     @click="emit('click')"
   >
-    <div class="flex justify-between items-start mb-2">
-      <h4 class="font-medium text-gray-900 truncate pr-2">{{ task.title }}</h4>
-      <span :class="['text-xs px-2 py-1 rounded-full whitespace-nowrap', priorityColor]">
-        {{ priorityLabel }}
+    <!-- Header: title + priority -->
+    <div class="flex items-start justify-between gap-2 mb-2">
+      <h4 class="font-medium text-gray-900 text-sm leading-snug line-clamp-2 flex-1">{{ task.title }}</h4>
+      <span :class="['text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-medium flex-shrink-0', priorityConfig.classes]">
+        {{ priorityConfig.label }}
       </span>
     </div>
 
-    <p class="text-sm text-gray-600 line-clamp-2 mb-3">
-      {{ task.description || 'No description provided.' }}
+    <!-- Description -->
+    <p v-if="task.description" class="text-xs text-gray-500 line-clamp-2 mb-2.5">
+      {{ task.description }}
     </p>
 
-    <div class="flex items-center justify-between text-xs text-gray-500">
-      <div class="flex items-center gap-2">
-        <span v-if="task.deadline" :class="{'text-red-500 font-medium': isOverdue}">
-          <svg class="inline-block w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    <!-- Tags -->
+    <div v-if="task.tags?.length" class="flex flex-wrap gap-1 mb-2.5">
+      <span
+        v-for="tag in task.tags"
+        :key="tag.id"
+        class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium"
+        :style="tag.color ? `background-color: ${tag.color}22; color: ${tag.color}` : ''"
+        :class="!tag.color ? 'bg-violet-50 text-violet-700' : ''"
+      >
+        {{ tag.name }}
+      </span>
+    </div>
+
+    <!-- Footer: deadline + counts -->
+    <div class="flex items-center justify-between text-xs text-gray-400">
+      <span
+        v-if="task.deadline"
+        :class="['flex items-center gap-1', isOverdue ? 'text-red-500 font-medium' : 'text-gray-500']"
+      >
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        {{ formattedDeadline }}
+      </span>
+      <span v-else></span>
+
+      <div class="flex items-center gap-2.5">
+        <span v-if="task.comments?.length" class="flex items-center gap-0.5">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
           </svg>
-          {{ new Date(task.deadline).toLocaleDateString() }}
+          {{ task.comments.length }}
         </span>
-      </div>
-      <div>
-        <!-- Any extra info, like comment count or attachment count -->
+        <span v-if="task.attachments?.length" class="flex items-center gap-0.5">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+          </svg>
+          {{ task.attachments.length }}
+        </span>
       </div>
     </div>
   </div>

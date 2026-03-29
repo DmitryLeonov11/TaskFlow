@@ -5,7 +5,20 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json'
     },
-    withCredentials: true
+    withCredentials: true,
+    paramsSerializer: (params) => {
+        const parts: string[] = [];
+        for (const key in params) {
+            const val = params[key];
+            if (val === undefined || val === null) continue;
+            if (Array.isArray(val)) {
+                val.forEach(v => parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(v)}`));
+            } else {
+                parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(val)}`);
+            }
+        }
+        return parts.join('&');
+    },
 });
 
 api.interceptors.request.use(config => {
