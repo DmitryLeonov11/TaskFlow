@@ -34,20 +34,20 @@ const handleMarkAllRead = () => {
 </script>
 
 <template>
-  <div class="absolute bottom-full left-0 mb-2 w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+  <div class="absolute bottom-full left-0 mb-2 w-80 bg-base-100 border border-base-300 rounded-xl shadow-xl z-50 overflow-hidden">
     <!-- Header -->
-    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-      <h3 class="text-sm font-semibold text-gray-900">Notifications</h3>
+    <div class="flex items-center justify-between px-4 py-3 border-b border-base-200">
+      <h3 class="text-sm font-semibold text-base-content">Notifications</h3>
       <div class="flex items-center gap-2">
         <button
           v-if="notificationStore.hasUnread"
           type="button"
           @click="handleMarkAllRead"
-          class="text-xs text-blue-600 hover:text-blue-700 font-medium"
+          class="text-xs text-primary hover:text-primary/80 font-medium"
         >
           Mark all read
         </button>
-        <button type="button" @click="emit('close')" class="text-gray-400 hover:text-gray-600">
+        <button type="button" @click="emit('close')" class="text-base-content/50 hover:text-base-content/70">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
@@ -58,10 +58,10 @@ const handleMarkAllRead = () => {
     <!-- List -->
     <div class="max-h-72 overflow-y-auto">
       <div v-if="notificationStore.loading" class="flex justify-center py-6">
-        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
       </div>
 
-      <div v-else-if="!notificationStore.items.length" class="py-8 text-center text-sm text-gray-400">
+      <div v-else-if="!notificationStore.items.length" class="py-8 text-center text-sm text-base-content/50">
         No notifications yet
       </div>
 
@@ -70,18 +70,18 @@ const handleMarkAllRead = () => {
           v-for="notif in notificationStore.items"
           :key="notif.id"
           :class="[
-            'px-4 py-3 border-b border-gray-50 last:border-0 transition-colors hover:bg-gray-50 cursor-pointer',
-            !notif.isRead ? 'bg-blue-50/40' : ''
+            'px-4 py-3 border-b border-base-200 last:border-0 transition-colors hover:bg-base-200 cursor-pointer',
+            !notif.isRead ? 'bg-primary/10' : ''
           ]"
           @click="!notif.isRead && handleMarkAsRead(notif.id)"
         >
           <div class="flex items-start gap-2.5">
             <span
-              :class="['w-2 h-2 rounded-full mt-1.5 flex-shrink-0', !notif.isRead ? 'bg-blue-500' : 'bg-transparent']"
+              :class="['w-2 h-2 rounded-full mt-1.5 flex-shrink-0', !notif.isRead ? 'bg-primary' : 'bg-transparent']"
             ></span>
             <div class="flex-1 min-w-0">
-              <p class="text-sm text-gray-800 leading-snug">{{ notif.message }}</p>
-              <p class="text-xs text-gray-400 mt-0.5">{{ formatTime(notif.createdAt) }}</p>
+              <p class="text-sm text-base-content leading-snug">{{ notif.message }}</p>
+              <p class="text-xs text-base-content/50 mt-0.5">{{ formatTime(notif.createdAt) }}</p>
             </div>
           </div>
         </div>

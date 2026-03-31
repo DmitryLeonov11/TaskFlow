@@ -3,11 +3,13 @@ import { computed, onMounted, ref } from 'vue';
 import { RouterView, RouterLink, useRoute } from 'vue-router';
 import { useNotificationStore } from './stores/notificationStore';
 import { useAuthStore } from './stores/authStore';
+import { useThemeStore } from './stores/themeStore';
 import NotificationsPanel from './components/NotificationsPanel.vue';
 
 const route = useRoute();
 const notificationStore = useNotificationStore();
 const authStore = useAuthStore();
+const themeStore = useThemeStore();
 
 const showNotifications = ref(false);
 
@@ -52,16 +54,32 @@ const toggleNotifications = async () => {
 
 <template>
   <!-- Desktop layout -->
-  <div class="h-screen sm:flex hidden bg-white overflow-hidden font-sans text-gray-900">
+  <div class="h-screen sm:flex hidden bg-base-100 overflow-hidden font-sans text-base-content">
 
     <!-- Sidebar -->
-    <aside class="w-60 flex-shrink-0 flex flex-col pt-5 pb-4 bg-gray-50 border-r border-gray-200">
-      <!-- Logo -->
+    <aside class="w-60 flex-shrink-0 flex flex-col pt-5 pb-4 bg-base-200 border-r border-base-300">
+      <!-- Logo + theme toggle -->
       <div class="flex items-center px-5 mb-8 gap-2.5">
-        <div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+        <div class="w-7 h-7 rounded-lg bg-primary text-primary-content flex items-center justify-center font-bold text-sm shadow-sm">
           T
         </div>
-        <span class="text-lg font-bold tracking-tight text-gray-900">TaskFlow</span>
+        <span class="text-lg font-bold tracking-tight text-base-content">TaskFlow</span>
+        <button
+          @click="themeStore.toggle()"
+          class="ml-auto p-1.5 rounded-lg hover:bg-base-300 text-base-content/50 hover:text-base-content transition-colors"
+          :title="themeStore.isDark ? 'Switch to light' : 'Switch to dark'"
+        >
+          <!-- Sun icon (shown in dark mode → click to go light) -->
+          <svg v-if="themeStore.isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          <!-- Moon icon (shown in light mode → click to go dark) -->
+          <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
+        </button>
       </div>
 
       <!-- Nav -->
@@ -72,8 +90,8 @@ const toggleNotifications = async () => {
           :to="item.href"
           :class="[
             isCurrentRoute(item.href)
-              ? 'bg-blue-50 text-blue-700 font-semibold'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+              ? 'bg-primary/10 text-primary font-semibold'
+              : 'text-base-content/70 hover:bg-base-200 hover:text-base-content',
             'flex items-center px-3 py-2 text-sm rounded-lg transition-colors'
           ]"
         >
@@ -88,23 +106,23 @@ const toggleNotifications = async () => {
         <div class="relative">
           <button
             type="button"
-            class="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors text-sm"
+            class="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-base-300 hover:bg-base-300 transition-colors text-sm"
             @click="toggleNotifications"
           >
             <div class="flex items-center gap-2">
               <span class="relative inline-flex">
-                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                 </svg>
                 <span
                   v-if="hasUnread"
-                  class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold"
+                  class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-error text-error-content text-[10px] font-semibold"
                 >
                   {{ unreadCount > 9 ? '9+' : unreadCount }}
                 </span>
               </span>
-              <span class="text-gray-700 font-medium">Notifications</span>
+              <span class="text-base-content/80 font-medium">Notifications</span>
             </div>
           </button>
 
@@ -116,18 +134,18 @@ const toggleNotifications = async () => {
 
         <!-- User -->
         <div v-if="isAuthenticated" class="space-y-1.5">
-          <div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-100">
+          <div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-base-100 border border-base-300">
             <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium text-xs flex-shrink-0">
               {{ user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U' }}{{ user?.lastName?.[0]?.toUpperCase() || '' }}
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-900 truncate">{{ user?.firstName || user?.email?.split('@')[0] || 'User' }}</p>
-              <p class="text-xs text-gray-400 truncate">{{ user?.email }}</p>
+              <p class="text-sm font-medium text-base-content truncate">{{ user?.firstName || user?.email?.split('@')[0] || 'User' }}</p>
+              <p class="text-xs text-base-content/50 truncate">{{ user?.email }}</p>
             </div>
           </div>
           <button
             @click="handleLogout"
-            class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-100 transition-colors"
+            class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-base-300 text-xs text-base-content/70 hover:bg-base-300 transition-colors"
           >
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -139,14 +157,14 @@ const toggleNotifications = async () => {
         <RouterLink
           v-else
           to="/auth"
-          class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+          class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-base-300 cursor-pointer transition-colors"
         >
-          <div class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
+          <div class="w-7 h-7 rounded-full bg-base-300 flex items-center justify-center text-base-content/60 text-xs">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
             </svg>
           </div>
-          <span class="text-sm font-medium text-gray-700">Login</span>
+          <span class="text-sm font-medium text-base-content/80">Login</span>
         </RouterLink>
       </div>
     </aside>
@@ -159,9 +177,9 @@ const toggleNotifications = async () => {
   </div>
 
   <!-- Mobile fallback -->
-  <div class="flex sm:hidden h-screen items-center justify-center p-8 text-center bg-gray-50 flex-col">
-    <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xl mb-4">T</div>
-    <h2 class="text-xl font-bold mb-2 text-gray-900">Desktop recommended</h2>
-    <p class="text-gray-500 text-sm">TaskFlow works best on larger screens.</p>
+  <div class="flex sm:hidden h-screen items-center justify-center p-8 text-center bg-base-200 flex-col">
+    <div class="w-12 h-12 rounded-xl bg-primary text-primary-content flex items-center justify-center font-bold text-xl mb-4">T</div>
+    <h2 class="text-xl font-bold mb-2 text-base-content">Desktop recommended</h2>
+    <p class="text-base-content/60 text-sm">TaskFlow works best on larger screens.</p>
   </div>
 </template>

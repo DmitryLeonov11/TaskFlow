@@ -117,16 +117,16 @@ const hasActiveFilters = computed(() => searchTerm.value.trim() || selectedFilte
 </script>
 
 <template>
-  <div class="h-full flex flex-col bg-slate-50">
+  <div class="h-full flex flex-col bg-base-200">
     <!-- Header -->
-    <header class="bg-white border-b px-6 py-3 shadow-sm z-10">
+    <header class="bg-base-100 border-b border-base-300 px-6 py-3 shadow-sm z-10">
       <div class="flex items-center justify-between mb-3">
         <div>
-          <h1 class="text-xl font-bold text-gray-800">Board</h1>
+          <h1 class="text-xl font-bold text-base-content">Board</h1>
         </div>
         <button
           @click="openNewTaskForm(0)"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-1.5"
+          class="bg-primary hover:bg-primary/90 text-primary-content px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-1.5"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -138,14 +138,14 @@ const hasActiveFilters = computed(() => searchTerm.value.trim() || selectedFilte
       <!-- Search + tag filters -->
       <div class="flex items-center gap-3 flex-wrap">
         <div class="relative">
-          <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
           <input
             v-model="searchTerm"
             type="search"
             placeholder="Search tasks..."
-            class="pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-52"
+            class="pl-8 pr-3 py-1.5 text-sm border border-base-300 rounded-lg bg-base-200 text-base-content focus:ring-2 focus:ring-primary focus:border-primary w-52"
           />
         </div>
 
@@ -158,8 +158,8 @@ const hasActiveFilters = computed(() => searchTerm.value.trim() || selectedFilte
             :class="[
               'px-2.5 py-1 text-xs rounded-full border transition-colors',
               selectedFilterTags.includes(tag.id)
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400 hover:text-blue-600'
+                ? 'bg-primary text-primary-content border-primary'
+                : 'bg-base-100 text-base-content/70 border-base-300 hover:border-primary/70 hover:text-primary'
             ]"
           >
             {{ tag.name }}
@@ -170,7 +170,7 @@ const hasActiveFilters = computed(() => searchTerm.value.trim() || selectedFilte
           v-if="hasActiveFilters"
           type="button"
           @click="clearFilters"
-          class="text-xs text-gray-500 hover:text-gray-800 flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
+          class="text-xs text-base-content/60 hover:text-base-content flex items-center gap-1 px-2 py-1 rounded hover:bg-base-200 transition-colors"
         >
           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -183,7 +183,7 @@ const hasActiveFilters = computed(() => searchTerm.value.trim() || selectedFilte
     <!-- Board -->
     <div class="flex-1 overflow-x-auto p-6">
       <div v-if="taskStore.loading" class="flex justify-center items-center h-full">
-        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
       </div>
 
       <div v-else class="flex gap-5 h-full items-start">

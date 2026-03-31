@@ -47,8 +47,8 @@ const submitNewTag = () => {
         :class="[
           'px-3 py-1 text-sm rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1',
           isSelected(tag.id)
-            ? 'bg-blue-100 text-blue-800 border-blue-200 focus:ring-blue-500'
-            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 focus:ring-gray-300'
+            ? 'bg-primary/20 text-primary border-primary/30 focus:ring-primary'
+            : 'bg-base-100 text-base-content/80 border-base-300 hover:bg-base-200 focus:ring-base-300'
         ]"
       >
         {{ tag.name }}
@@ -58,7 +58,7 @@ const submitNewTag = () => {
         v-if="!creating"
         type="button"
         @click="creating = true"
-        class="px-3 py-1 text-sm rounded-full border border-dashed border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors"
+        class="px-3 py-1 text-sm rounded-full border border-dashed border-base-300 text-base-content/50 hover:border-primary/70 hover:text-primary transition-colors"
       >
         + New tag
       </button>
@@ -73,19 +73,19 @@ const submitNewTag = () => {
         maxlength="30"
         @keydown.enter.prevent="submitNewTag"
         @keydown.esc="creating = false; newTagName = ''"
-        class="px-2.5 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-36"
+        class="px-2.5 py-1 text-sm border border-base-300 rounded-lg bg-base-200 text-base-content focus:ring-2 focus:ring-primary focus:border-primary w-36"
       />
       <button
         type="button"
         @click="submitNewTag"
-        class="px-2.5 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        class="px-2.5 py-1 text-sm bg-primary text-primary-content rounded-lg hover:bg-primary/90 transition-colors"
       >
         Add
       </button>
       <button
         type="button"
         @click="creating = false; newTagName = ''"
-        class="px-2.5 py-1 text-sm text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+        class="px-2.5 py-1 text-sm text-base-content/60 hover:text-base-content hover:bg-base-200 rounded-lg transition-colors"
       >
         Cancel
       </button>

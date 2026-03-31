@@ -84,12 +84,12 @@ const resetPassword = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-lg border border-slate-100 p-8 space-y-6">
-      <h1 class="text-2xl font-bold text-slate-900 text-center mb-2">
+  <div class="min-h-screen flex items-center justify-center bg-base-200 px-4">
+    <div class="w-full max-w-md bg-base-100 rounded-2xl shadow-lg border border-base-200 p-8 space-y-6">
+      <h1 class="text-2xl font-bold text-base-content text-center mb-2">
         {{ isResetMode ? 'Reset Password' : isRegisterMode ? 'Create Account' : 'Login' }}
       </h1>
-      <p class="text-sm text-slate-500 text-center mb-6">
+      <p class="text-sm text-base-content/60 text-center mb-6">
         {{ isResetMode ? 'Reset your TaskFlow account password.' : isRegisterMode ? 'Create your TaskFlow account.' : 'Sign in to your TaskFlow account.' }}
       </p>
 
@@ -103,29 +103,29 @@ const resetPassword = async () => {
       <!-- Login Form -->
       <form v-if="!isResetMode && !isRegisterMode" @submit.prevent="login" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+          <label class="block text-sm font-medium text-base-content/80 mb-1">Email</label>
           <input
             v-model="email"
             type="email"
             required
-            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full border border-base-300 rounded-lg px-3 py-2 text-sm bg-base-200 text-base-content placeholder:text-base-content/40 focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="you@example.com"
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+          <label class="block text-sm font-medium text-base-content/80 mb-1">Password</label>
           <input
             v-model="password"
             type="password"
             required
-            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full border border-base-300 rounded-lg px-3 py-2 text-sm bg-base-200 text-base-content placeholder:text-base-content/40 focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="••••••••"
           />
         </div>
 
         <button
           type="submit"
-          class="w-full inline-flex justify-center items-center px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+          class="w-full inline-flex justify-center items-center px-4 py-2.5 rounded-lg bg-primary text-primary-content text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
         >
           Login
         </button>
@@ -133,14 +133,14 @@ const resetPassword = async () => {
         <div class="flex items-center justify-between">
           <button
             type="button"
-            class="text-xs text-slate-500 hover:text-slate-700"
+            class="text-xs text-base-content/60 hover:text-base-content/80"
             @click="isRegisterMode = true"
           >
             Don't have an account? Register
           </button>
           <button
             type="button"
-            class="text-xs text-slate-500 hover:text-slate-700"
+            class="text-xs text-base-content/60 hover:text-base-content/80"
             @click="isResetMode = true"
           >
             Forgot password?
@@ -152,70 +152,70 @@ const resetPassword = async () => {
       <form v-else-if="isRegisterMode" @submit.prevent="register" class="space-y-4">
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">First Name</label>
+            <label class="block text-sm font-medium text-base-content/80 mb-1">First Name</label>
             <input
               v-model="firstName"
               type="text"
-              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="w-full border border-base-300 rounded-lg px-3 py-2 text-sm bg-base-200 text-base-content placeholder:text-base-content/40 focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder="John"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
+            <label class="block text-sm font-medium text-base-content/80 mb-1">Last Name</label>
             <input
               v-model="lastName"
               type="text"
-              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="w-full border border-base-300 rounded-lg px-3 py-2 text-sm bg-base-200 text-base-content placeholder:text-base-content/40 focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder="Doe"
             />
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+          <label class="block text-sm font-medium text-base-content/80 mb-1">Email</label>
           <input
             v-model="email"
             type="email"
             required
-            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full border border-base-300 rounded-lg px-3 py-2 text-sm bg-base-200 text-base-content placeholder:text-base-content/40 focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="you@example.com"
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+          <label class="block text-sm font-medium text-base-content/80 mb-1">Password</label>
           <input
             v-model="password"
             type="password"
             required
             minlength="8"
-            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full border border-base-300 rounded-lg px-3 py-2 text-sm bg-base-200 text-base-content placeholder:text-base-content/40 focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="••••••••"
           />
-          <p class="text-xs text-slate-500 mt-1">
+          <p class="text-xs text-base-content/60 mt-1">
             Min 8 chars: 1 uppercase, 1 lowercase, 1 digit, 1 special character
           </p>
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Confirm Password</label>
+          <label class="block text-sm font-medium text-base-content/80 mb-1">Confirm Password</label>
           <input
             v-model="confirmPassword"
             type="password"
             required
             minlength="8"
-            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full border border-base-300 rounded-lg px-3 py-2 text-sm bg-base-200 text-base-content placeholder:text-base-content/40 focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="••••••••"
           />
         </div>
 
         <button
           type="submit"
-          class="w-full inline-flex justify-center items-center px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+          class="w-full inline-flex justify-center items-center px-4 py-2.5 rounded-lg bg-primary text-primary-content text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
         >
           Register
         </button>
 
         <button
           type="button"
-          class="w-full text-xs text-slate-500 hover:text-slate-700 text-center"
+          class="w-full text-xs text-base-content/60 hover:text-base-content/80 text-center"
           @click="isRegisterMode = false"
         >
           Already have an account? Login
@@ -224,12 +224,12 @@ const resetPassword = async () => {
 
       <form v-else @submit.prevent="resetPassword" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+          <label class="block text-sm font-medium text-base-content/80 mb-1">Email</label>
           <input
             v-model="resetEmail"
             type="email"
             required
-            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full border border-base-300 rounded-lg px-3 py-2 text-sm bg-base-200 text-base-content placeholder:text-base-content/40 focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="you@example.com"
           />
         </div>
@@ -237,35 +237,35 @@ const resetPassword = async () => {
         <div class="space-y-2">
           <button
             type="button"
-            class="w-full inline-flex justify-center items-center px-4 py-2.5 rounded-lg bg-slate-800 text-white text-sm font-medium hover:bg-slate-900 transition-colors shadow-sm"
+            class="w-full inline-flex justify-center items-center px-4 py-2.5 rounded-lg bg-neutral text-neutral-content text-sm font-medium hover:bg-neutral/90 transition-colors shadow-sm"
             @click="requestReset"
           >
             Request reset link
           </button>
-          <p class="text-xs text-slate-500">
+          <p class="text-xs text-base-content/60">
             In this demo, reset token is written to server logs. Copy it from API logs and paste below.
           </p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Reset token</label>
+          <label class="block text-sm font-medium text-base-content/80 mb-1">Reset token</label>
           <textarea
             v-model="resetToken"
             rows="3"
             required
-            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full border border-base-300 rounded-lg px-3 py-2 text-sm bg-base-200 text-base-content placeholder:text-base-content/40 focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="Paste token from email / logs"
           ></textarea>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">New password</label>
+          <label class="block text-sm font-medium text-base-content/80 mb-1">New password</label>
           <input
             v-model="newPassword"
             type="password"
             required
             minlength="8"
-            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full border border-base-300 rounded-lg px-3 py-2 text-sm bg-base-200 text-base-content placeholder:text-base-content/40 focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="New secure password"
           />
         </div>
@@ -273,14 +273,14 @@ const resetPassword = async () => {
         <div class="flex gap-3 pt-1">
           <button
             type="button"
-            class="flex-1 inline-flex justify-center items-center px-4 py-2.5 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            class="flex-1 inline-flex justify-center items-center px-4 py-2.5 rounded-lg border border-base-300 text-sm font-medium text-base-content/80 hover:bg-base-200"
             @click="isResetMode = false"
           >
             Back to login
           </button>
           <button
             type="submit"
-            class="flex-1 inline-flex justify-center items-center px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+            class="flex-1 inline-flex justify-center items-center px-4 py-2.5 rounded-lg bg-primary text-primary-content text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
           >
             Reset password
           </button>
@@ -289,4 +289,3 @@ const resetPassword = async () => {
     </div>
   </div>
 </template>
-

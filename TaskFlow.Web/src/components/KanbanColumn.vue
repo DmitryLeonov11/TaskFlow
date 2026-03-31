@@ -24,20 +24,20 @@ const onDrop = (e: DragEvent) => {
 
 <template>
   <div
-    class="flex flex-col flex-shrink-0 w-80 bg-gray-50 rounded-xl p-3 border border-gray-200 shadow-sm h-full"
+    class="flex flex-col flex-shrink-0 w-80 bg-base-200 rounded-xl p-3 border border-base-300 shadow-sm h-full"
     @dragover.prevent
     @drop="onDrop"
   >
     <div class="flex items-center justify-between mb-3 px-1">
-      <h3 class="font-semibold text-gray-700 flex items-center gap-2">
+      <h3 class="font-semibold text-base-content/80 flex items-center gap-2">
         {{ title }}
-        <span class="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full font-medium">
+        <span class="bg-base-300 text-base-content/70 text-xs px-2 py-0.5 rounded-full font-medium">
           {{ tasks.length }}
         </span>
       </h3>
       <button
         @click="emit('add-task', status)"
-        class="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-200 transition-colors"
+        class="text-base-content/50 hover:text-base-content/70 p-1 rounded hover:bg-base-300 transition-colors"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -55,7 +55,7 @@ const onDrop = (e: DragEvent) => {
         @click="emit('task-click', task)"
       />
 
-      <div v-if="tasks.length === 0" class="h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 text-sm">
+      <div v-if="tasks.length === 0" class="h-24 border-2 border-dashed border-base-300 rounded-lg flex items-center justify-center text-base-content/50 text-sm">
         Drag tasks here
       </div>
     </div>
@@ -69,8 +69,12 @@ const onDrop = (e: DragEvent) => {
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb {
+[data-theme="light"] .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
+  border-radius: 20px;
+}
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #334155;
   border-radius: 20px;
 }
 </style>

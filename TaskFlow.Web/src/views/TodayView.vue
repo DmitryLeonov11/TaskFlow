@@ -70,33 +70,33 @@ const handleDeleteTask = async (id: string) => {
 </script>
 
 <template>
-  <div class="h-full bg-slate-50 overflow-y-auto">
+  <div class="h-full bg-base-200 overflow-y-auto">
     <div class="max-w-3xl mx-auto px-6 py-8">
       <header class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 mb-1">Today</h1>
-        <p class="text-gray-500 text-sm">
+        <h1 class="text-2xl font-bold text-base-content mb-1">Today</h1>
+        <p class="text-base-content/60 text-sm">
           {{ new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) }}
         </p>
       </header>
 
       <div v-if="taskStore.loading" class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
       </div>
 
       <template v-else-if="todayTasks.length === 0">
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 mx-auto mb-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="bg-base-100 rounded-xl border border-base-200 shadow-sm p-12 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 mx-auto mb-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <h3 class="text-base font-semibold text-gray-900 mb-1">All caught up!</h3>
-          <p class="text-sm text-gray-400">No tasks due today. Enjoy your day.</p>
+          <h3 class="text-base font-semibold text-base-content mb-1">All caught up!</h3>
+          <p class="text-sm text-base-content/50">No tasks due today. Enjoy your day.</p>
         </div>
       </template>
 
       <template v-else>
         <!-- Overdue section -->
         <div v-if="overdueTasks.length" class="mb-6">
-          <h2 class="text-xs font-semibold text-red-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+          <h2 class="text-xs font-semibold text-error uppercase tracking-wider mb-3 flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
@@ -114,7 +114,7 @@ const handleDeleteTask = async (id: string) => {
 
         <!-- Due today section -->
         <div v-if="dueTodayTasks.length">
-          <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          <h2 class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-3">
             Due Today ({{ dueTodayTasks.length }})
           </h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">

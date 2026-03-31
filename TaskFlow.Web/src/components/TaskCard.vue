@@ -12,8 +12,8 @@ const emit = defineEmits<{
 
 const priorityConfig = computed(() => {
   const configs = [
-    { label: 'Low',    classes: 'bg-gray-100 text-gray-600' },
-    { label: 'Medium', classes: 'bg-blue-100 text-blue-700' },
+    { label: 'Low',    classes: 'bg-base-300 text-base-content/70' },
+    { label: 'Medium', classes: 'bg-primary/20 text-primary' },
     { label: 'High',   classes: 'bg-orange-100 text-orange-700' },
     { label: 'Urgent', classes: 'bg-red-100 text-red-700' },
   ];
@@ -42,19 +42,19 @@ const onDragStart = (e: DragEvent) => {
   <div
     draggable="true"
     @dragstart="onDragStart"
-    class="bg-white p-3.5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all select-none cursor-grab active:cursor-grabbing group"
+    class="bg-base-100 p-3.5 rounded-lg shadow-sm border border-base-300 hover:shadow-md hover:border-base-content/20 transition-all select-none cursor-pointer active:cursor-grabbing group"
     @click="emit('click')"
   >
     <!-- Header: title + priority -->
     <div class="flex items-start justify-between gap-2 mb-2">
-      <h4 class="font-medium text-gray-900 text-sm leading-snug line-clamp-2 flex-1">{{ task.title }}</h4>
+      <h4 class="font-medium text-base-content text-sm leading-snug line-clamp-2 flex-1">{{ task.title }}</h4>
       <span :class="['text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-medium flex-shrink-0', priorityConfig.classes]">
         {{ priorityConfig.label }}
       </span>
     </div>
 
     <!-- Description -->
-    <p v-if="task.description" class="text-xs text-gray-500 line-clamp-2 mb-2.5">
+    <p v-if="task.description" class="text-xs text-base-content/60 line-clamp-2 mb-2.5">
       {{ task.description }}
     </p>
 
@@ -65,17 +65,17 @@ const onDragStart = (e: DragEvent) => {
         :key="tag.id"
         class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium"
         :style="tag.color ? `background-color: ${tag.color}22; color: ${tag.color}` : ''"
-        :class="!tag.color ? 'bg-violet-50 text-violet-700' : ''"
+        :class="!tag.color ? 'bg-secondary/10 text-secondary' : ''"
       >
         {{ tag.name }}
       </span>
     </div>
 
     <!-- Footer: deadline + counts -->
-    <div class="flex items-center justify-between text-xs text-gray-400">
+    <div class="flex items-center justify-between text-xs text-base-content/50">
       <span
         v-if="task.deadline"
-        :class="['flex items-center gap-1', isOverdue ? 'text-red-500 font-medium' : 'text-gray-500']"
+        :class="['flex items-center gap-1', isOverdue ? 'text-error font-medium' : 'text-base-content/60']"
       >
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

@@ -66,10 +66,10 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-100">
+  <div class="bg-base-100 p-6 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-base-200">
     <div class="flex items-center justify-between mb-5">
-      <h2 class="text-xl font-bold text-gray-800">{{ isEditing ? 'Edit Task' : 'New Task' }}</h2>
-      <button type="button" @click="emit('cancel')" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
+      <h2 class="text-xl font-bold text-base-content">{{ isEditing ? 'Edit Task' : 'New Task' }}</h2>
+      <button type="button" @click="emit('cancel')" class="text-base-content/50 hover:text-base-content/70 p-1 rounded-lg hover:bg-base-200">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
@@ -78,33 +78,33 @@ const handleDelete = () => {
 
     <form @submit.prevent="submit" class="space-y-4">
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Title <span class="text-red-500">*</span></label>
+        <label class="block text-sm font-medium text-base-content/80 mb-1">Title <span class="text-error">*</span></label>
         <input
           v-model="form.title"
           type="text"
           required
           autofocus
-          class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+          class="w-full border border-base-300 rounded-lg px-4 py-2 bg-base-200 text-base-content placeholder:text-base-content/40 focus:ring-2 focus:ring-primary focus:border-primary transition-colors text-sm"
           placeholder="Task title"
         />
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <label class="block text-sm font-medium text-base-content/80 mb-1">Description</label>
         <textarea
           v-model="form.description"
           rows="3"
-          class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm resize-none"
+          class="w-full border border-base-300 rounded-lg px-4 py-2 bg-base-200 text-base-content placeholder:text-base-content/40 focus:ring-2 focus:ring-primary focus:border-primary transition-colors text-sm resize-none"
           placeholder="Add a description..."
         ></textarea>
       </div>
 
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+          <label class="block text-sm font-medium text-base-content/80 mb-1">Priority</label>
           <select
             v-model="form.priority"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            class="w-full border border-base-300 rounded-lg px-3 py-2 bg-base-200 text-base-content focus:ring-2 focus:ring-primary focus:border-primary text-sm"
           >
             <option :value="0">Low</option>
             <option :value="1">Medium</option>
@@ -114,10 +114,10 @@ const handleDelete = () => {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <label class="block text-sm font-medium text-base-content/80 mb-1">Status</label>
           <select
             v-model="form.status"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            class="w-full border border-base-300 rounded-lg px-3 py-2 bg-base-200 text-base-content focus:ring-2 focus:ring-primary focus:border-primary text-sm"
           >
             <option :value="0">To Do</option>
             <option :value="1">In Progress</option>
@@ -128,16 +128,16 @@ const handleDelete = () => {
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+        <label class="block text-sm font-medium text-base-content/80 mb-1">Deadline</label>
         <input
           v-model="form.deadline"
           type="date"
-          class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+          class="w-full border border-base-300 rounded-lg px-4 py-2 bg-base-200 text-base-content focus:ring-2 focus:ring-primary focus:border-primary text-sm"
         />
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+        <label class="block text-sm font-medium text-base-content/80 mb-2">Tags</label>
         <TagSelector
           :available-tags="tagStore.tags"
           :selected-tags="selectedTags"
@@ -146,30 +146,30 @@ const handleDelete = () => {
         />
       </div>
 
-      <div class="pt-4 border-t flex items-center justify-between gap-3">
+      <div class="pt-4 border-t border-base-300 flex items-center justify-between gap-3">
         <!-- Delete (only when editing) -->
         <div v-if="isEditing">
           <button
             v-if="!confirmDelete"
             type="button"
             @click="handleDelete"
-            class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+            class="px-3 py-2 text-error hover:bg-error/10 rounded-lg text-sm font-medium transition-colors"
           >
             Delete
           </button>
           <div v-else class="flex items-center gap-2">
-            <span class="text-sm text-red-600">Are you sure?</span>
+            <span class="text-sm text-error">Are you sure?</span>
             <button
               type="button"
               @click="handleDelete"
-              class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+              class="px-3 py-1.5 bg-error text-error-content rounded-lg text-sm font-medium hover:bg-error/90 transition-colors"
             >
               Yes, delete
             </button>
             <button
               type="button"
               @click="confirmDelete = false"
-              class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+              class="px-3 py-1.5 border border-base-300 rounded-lg text-sm text-base-content/70 hover:bg-base-200 transition-colors"
             >
               Cancel
             </button>
@@ -181,13 +181,13 @@ const handleDelete = () => {
           <button
             type="button"
             @click="emit('cancel')"
-            class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-sm font-medium"
+            class="px-4 py-2 text-base-content/80 bg-base-200 hover:bg-base-300 rounded-lg transition-colors text-sm font-medium"
           >
             Cancel
           </button>
           <button
             type="submit"
-            class="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-sm font-medium shadow-sm"
+            class="px-4 py-2 text-primary-content bg-primary hover:bg-primary/90 rounded-lg transition-colors text-sm font-medium shadow-sm"
           >
             {{ isEditing ? 'Save Changes' : 'Create Task' }}
           </button>
