@@ -3,9 +3,10 @@ import { useTaskStore } from '../stores/taskStore';
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
+  private isReconnecting = false;
 
   public async startConnection() {
-    if (this.connection) {
+    if (this.connection || this.isReconnecting) {
       return;
     }
 
@@ -49,7 +50,8 @@ class SignalRService {
     } catch (err) {
       console.error('Tasks SignalR Connection Error: ', err);
       this.connection = null;
-      setTimeout(() => this.startConnection(), 5000);
+      this.isReconnecting = true;
+      setTimeout(() => { this.isReconnecting = false; this.startConnection(); }, 5000);
     }
   }
 

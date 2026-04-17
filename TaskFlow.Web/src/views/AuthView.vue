@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/authStore';
 import api from '../services/apiService';
@@ -48,7 +48,8 @@ const register = async () => {
     });
     // After registration, redirect to login
     message.value = 'Registration successful! Redirecting to login...';
-    setTimeout(() => router.push('/auth'), 1000);
+    const redirectTimer = setTimeout(() => router.push('/auth'), 1000);
+    onUnmounted(() => clearTimeout(redirectTimer));
   } catch (e: any) {
     error.value = e.response?.data?.message || 'Registration failed.';
   }

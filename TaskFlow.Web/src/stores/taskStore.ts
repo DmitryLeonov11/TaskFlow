@@ -78,8 +78,8 @@ export const useTaskStore = defineStore('task', () => {
 
             const response = await api.get('/tasks', { params: queryParams });
             const data = response.data;
-            tasks.value = data.tasks;
-            totalCount.value = data.totalCount;
+            tasks.value = data.tasks ?? [];
+            totalCount.value = data.totalCount ?? 0;
         } catch (e: unknown) {
             const msg = (e as any)?.response?.data?.message ?? 'Failed to fetch tasks';
             error.value = msg;

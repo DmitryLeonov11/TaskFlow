@@ -62,7 +62,7 @@ public class MoveTaskHandler : IRequestHandler<MoveTaskCommand, TaskItemDto>
             tasksInNewColumn[i].OrderIndex = i < request.NewOrderIndex ? i : i + 1;
         }
 
-        task.OrderIndex = request.NewOrderIndex;
+        task.OrderIndex = Math.Min(request.NewOrderIndex, tasksInNewColumn.Count);
         task.UpdatedAt = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
