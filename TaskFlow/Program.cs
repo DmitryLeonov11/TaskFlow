@@ -12,6 +12,7 @@ using TaskFlow.Domain.Identity;
 using TaskFlow.Features.Tasks;
 using TaskFlow.Hubs;
 using TaskFlow.Infrastructure.Persistence;
+using TaskFlow.Infrastructure.Services;
 
 public class Program
 {
@@ -161,17 +162,22 @@ public class Program
         builder.Services.AddAuthorization();
 
         // CORS
+        var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+            ?? new[] { "http://localhost:5173" };
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowFrontend", policy =>
             {
-                policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:8080")
+                policy.WithOrigins(allowedOrigins)
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials()
                     .WithExposedHeaders("Content-Disposition");
             });
         });
+
+        // Services
+        builder.Services.AddScoped<ITokenService, TokenService>();
 
         // MediatR
         builder.Services.AddMediatR(cfg =>

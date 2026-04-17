@@ -37,8 +37,12 @@ public class UploadAttachmentHandler : IRequestHandler<UploadAttachmentCommand, 
             Directory.CreateDirectory(taskFolder);
         }
 
-        // Generate unique filename
-        var uniqueFileName = $"{Guid.NewGuid()}_{request.FileName}";
+        // Sanitize filename: strip directory components and keep only safe characters
+        var safeFileName = Path.GetFileName(request.FileName);
+        safeFileName = string.Concat(safeFileName.Where(c => char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_'));
+        if (string.IsNullOrEmpty(safeFileName)) safeFileName = "file";
+
+        var uniqueFileName = $"{Guid.NewGuid()}_{safeFileName}";
         var filePath = Path.Combine(taskFolder, uniqueFileName);
 
         // Save file

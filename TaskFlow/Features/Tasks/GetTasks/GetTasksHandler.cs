@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.DTOs;
-using TaskFlow.Domain.Entities;
+using TaskFlow.Application.Extensions;
 using TaskFlow.Infrastructure.Persistence;
 
 namespace TaskFlow.Features.Tasks.GetTasks;
@@ -53,25 +53,9 @@ public class GetTasksHandler : IRequestHandler<GetTasksQuery, GetTasksResponse>
             .Take(request.PageSize)
             .ToListAsync(cancellationToken);
 
-        var dtos = tasks.Select(t => MapToDto(t)).ToList();
+        var dtos = tasks.Select(t => t.ToDto()).ToList();
 
         return new GetTasksResponse(dtos, totalCount, request.PageNumber, request.PageSize);
     }
 
-    private static TaskItemDto MapToDto(TaskItem task)
-    {
-        return new TaskItemDto(
-            task.Id,
-            task.Title,
-            task.Description,
-            (int)task.Priority,
-            (int)task.Status,
-            task.Deadline,
-            task.OrderIndex,
-            task.CreatedAt,
-            task.UpdatedAt,
-            task.TaskTags.Select(tt => new TagDto(tt.Tag.Id, tt.Tag.Name, tt.Tag.Color)).ToList(),
-            task.Comments.Select(c => new TaskCommentDto(c.Id, c.UserId, c.Content, c.CreatedAt)).ToList(),
-            task.Attachments.Select(a => new TaskAttachmentDto(a.Id, a.FileName, a.FileSize, a.UploadedAt)).ToList());
-    }
 }

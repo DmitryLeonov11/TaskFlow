@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/authStore';
 import api from '../services/apiService';
 
 const authStore = useAuthStore();
+const router = useRouter();
 
 const email = ref('');
 const password = ref('');
@@ -23,8 +25,7 @@ const login = async () => {
   message.value = '';
   try {
     await authStore.login({ email: email.value, password: password.value });
-    // Use window.location to force full page reload and ensure localStorage is read
-    window.location.href = '/board';
+    await router.push('/board');
   } catch (e: any) {
     error.value = e.response?.data?.message || 'Login failed.';
   }
@@ -47,9 +48,7 @@ const register = async () => {
     });
     // After registration, redirect to login
     message.value = 'Registration successful! Redirecting to login...';
-    setTimeout(() => {
-      window.location.href = '/auth';
-    }, 1000);
+    setTimeout(() => router.push('/auth'), 1000);
   } catch (e: any) {
     error.value = e.response?.data?.message || 'Registration failed.';
   }

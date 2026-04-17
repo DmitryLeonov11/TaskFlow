@@ -48,6 +48,7 @@ class SignalRService {
       console.log('Tasks SignalR connected.');
     } catch (err) {
       console.error('Tasks SignalR Connection Error: ', err);
+      this.connection = null;
       setTimeout(() => this.startConnection(), 5000);
     }
   }

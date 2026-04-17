@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia';
 import api from '../services/apiService';
+import signalrService from '../services/signalrService';
 import { ref, computed } from 'vue';
 
 export const useAuthStore = defineStore('auth', () => {
     const token = ref<string | null>(localStorage.getItem('auth_token'));
     const user = ref<any>(null);
-    
+
     const userStr = localStorage.getItem('auth_user');
     if (userStr) {
         try {
@@ -15,28 +16,15 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    const isAuthenticated = computed(() => {
-        return !!localStorage.getItem('auth_token');
-    });
+    const isAuthenticated = computed(() => !!token.value);
 
-    const getUser = computed(() => {
-        const storedUser = localStorage.getItem('auth_user');
-        if (storedUser) {
-            try {
-                return JSON.parse(storedUser);
-            } catch {
-                return null;
-            }
-        }
-        return user.value;
-    });
+    const getUser = computed(() => user.value);
 
     const setAuth = (accessToken: string, userData: any) => {
         localStorage.setItem('auth_token', accessToken);
         localStorage.setItem('auth_user', JSON.stringify(userData));
         token.value = accessToken;
         user.value = userData;
-        console.log('[Auth] Token saved:', accessToken ? 'YES (length: ' + accessToken.length + ')' : 'NO');
     };
 
     const login = async (credentials: any) => {
@@ -61,7 +49,8 @@ export const useAuthStore = defineStore('auth', () => {
         setAuth(response.data.accessToken, authData);
     };
 
-    const logout = () => {
+    const logout = async () => {
+        await signalrService.stopConnection();
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
         token.value = null;

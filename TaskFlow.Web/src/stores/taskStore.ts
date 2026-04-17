@@ -32,6 +32,24 @@ export interface Task {
     attachments: TaskAttachment[];
 }
 
+export interface CreateTaskInput {
+    title: string;
+    description?: string | null;
+    priority: number;
+    status?: number;
+    deadline?: string | null;
+    tagIds?: string[];
+}
+
+export interface UpdateTaskInput {
+    title?: string;
+    description?: string | null;
+    priority?: number;
+    status?: number;
+    deadline?: string | null;
+    tagIds?: string[];
+}
+
 export interface FetchTasksParams {
     searchTerm?: string;
     tagIds?: string[];
@@ -43,26 +61,29 @@ export interface FetchTasksParams {
 export const useTaskStore = defineStore('task', () => {
     const tasks = ref<Task[]>([]);
     const loading = ref(false);
+    const error = ref<string | null>(null);
     const totalCount = ref(0);
 
     const fetchTasks = async (params: FetchTasksParams = {}) => {
         loading.value = true;
+        error.value = null;
         try {
-            const queryParams: Record<string, any> = {
+            const queryParams: Record<string, unknown> = {
                 pageNumber: params.pageNumber ?? 1,
                 pageSize: params.pageSize ?? 200,
             };
             if (params.searchTerm) queryParams.searchTerm = params.searchTerm;
             if (params.status !== undefined) queryParams.status = params.status;
-            // tagIds are not supported as query array by default in axios — send as repeated params
-            if (params.tagIds?.length) {
-                queryParams['tagIds'] = params.tagIds;
-            }
+            if (params.tagIds?.length) queryParams['tagIds'] = params.tagIds;
 
             const response = await api.get('/tasks', { params: queryParams });
             const data = response.data;
-            tasks.value = data.tasks ?? data;
-            totalCount.value = data.totalCount ?? tasks.value.length;
+            tasks.value = data.tasks;
+            totalCount.value = data.totalCount;
+        } catch (e: unknown) {
+            const msg = (e as any)?.response?.data?.message ?? 'Failed to fetch tasks';
+            error.value = msg;
+            throw e;
         } finally {
             loading.value = false;
         }
@@ -74,10 +95,9 @@ export const useTaskStore = defineStore('task', () => {
             .sort((a, b) => a.orderIndex - b.orderIndex);
     };
 
-    const createTask = async (taskData: any) => {
+    const createTask = async (taskData: CreateTaskInput) => {
         const response = await api.post('/tasks', taskData);
-        const newTask = response.data;
-        // Ensure tags/comments/attachments default to arrays
+        const newTask: Task = response.data;
         if (!newTask.tags) newTask.tags = [];
         if (!newTask.comments) newTask.comments = [];
         if (!newTask.attachments) newTask.attachments = [];
@@ -85,9 +105,9 @@ export const useTaskStore = defineStore('task', () => {
         return newTask;
     };
 
-    const updateTask = async (id: string, taskData: any) => {
+    const updateTask = async (id: string, taskData: UpdateTaskInput) => {
         const response = await api.put(`/tasks/${id}`, taskData);
-        const updated = response.data;
+        const updated: Task = response.data;
         const index = tasks.value.findIndex(t => t.id === id);
         if (index !== -1) {
             tasks.value[index] = {
@@ -102,16 +122,8 @@ export const useTaskStore = defineStore('task', () => {
 
     const moveTask = async (id: string, newStatus: number, newOrderIndex: number) => {
         await api.put(`/tasks/${id}/move`, { newStatus, newOrderIndex });
-        const task = tasks.value.find(t => t.id === id);
-        if (!task) return;
-
-        task.status = newStatus;
-        task.orderIndex = newOrderIndex;
-
-        tasks.value
-            .filter(t => t.status === newStatus)
-            .sort((a, b) => a.orderIndex - b.orderIndex)
-            .forEach((t, index) => { t.orderIndex = index; });
+        // Refetch to get server-authoritative order indices for all affected columns
+        await fetchTasks();
     };
 
     const deleteTask = async (id: string) => {
@@ -119,5 +131,5 @@ export const useTaskStore = defineStore('task', () => {
         tasks.value = tasks.value.filter(t => t.id !== id);
     };
 
-    return { tasks, loading, totalCount, fetchTasks, getTasksForStatus, createTask, updateTask, moveTask, deleteTask };
+    return { tasks, loading, error, totalCount, fetchTasks, getTasksForStatus, createTask, updateTask, moveTask, deleteTask };
 });

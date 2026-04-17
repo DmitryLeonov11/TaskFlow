@@ -1,26 +1,22 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using TaskFlow.Application.DTOs;
 using TaskFlow.Domain.Identity;
+using TaskFlow.Infrastructure.Services;
 
 namespace TaskFlow.Features.Auth.Register;
 
 public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IConfiguration _configuration;
+    private readonly ITokenService _tokenService;
 
     public RegisterHandler(
         UserManager<ApplicationUser> userManager,
-        IConfiguration configuration)
+        ITokenService tokenService)
     {
         _userManager = userManager;
-        _configuration = configuration;
+        _tokenService = tokenService;
     }
 
     public async Task<AuthResponse> Handle(RegisterCommand request, CancellationToken cancellationToken)
@@ -50,7 +46,7 @@ public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
 
         await _userManager.AddToRoleAsync(user, "User");
 
-        var accessToken = await GenerateJwtToken(user);
+        var accessToken = await _tokenService.GenerateAccessTokenAsync(user);
         var refreshToken = Guid.NewGuid().ToString();
 
         // TODO: Store refresh token in database
@@ -63,40 +59,5 @@ public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
             accessToken,
             refreshToken
         );
-    }
-
-    private async Task<string> GenerateJwtToken(ApplicationUser user)
-    {
-        var jwtSettings = _configuration.GetSection("JwtSettings");
-        var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? throw new InvalidOperationException("JWT Key not configured"));
-
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, user.Id),
-            new(ClaimTypes.Email, user.Email!),
-            new("FirstName", user.FirstName ?? ""),
-            new("LastName", user.LastName ?? "")
-        };
-
-        var roles = await _userManager.GetRolesAsync(user);
-        foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(int.Parse(jwtSettings["ExpirationMinutes"] ?? "60")),
-            Issuer = jwtSettings["Issuer"],
-            Audience = jwtSettings["Audience"],
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
     }
 }

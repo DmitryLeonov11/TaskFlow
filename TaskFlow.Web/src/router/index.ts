@@ -34,11 +34,9 @@ router.beforeEach((to, _from, next) => {
   const hasToken = !!localStorage.getItem('auth_token');
 
   if (to.meta.requiresAuth && !hasToken) {
-    // Redirect to auth with full page reload to reset app state
-    window.location.href = '/auth';
+    next('/auth');
   } else if (to.name === 'auth' && hasToken) {
-    // If already authenticated and trying to go to auth page, redirect to board
-    window.location.href = '/board';
+    next('/board');
   } else {
     next();
   }

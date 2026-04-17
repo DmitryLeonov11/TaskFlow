@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.DTOs;
+using TaskFlow.Application.Extensions;
 using TaskFlow.Domain.Entities;
 using TaskFlow.Hubs;
 using TaskFlow.Infrastructure.Persistence;
@@ -66,27 +67,11 @@ public class UpdateTaskHandler : IRequestHandler<UpdateTaskCommand, TaskItemDto>
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        var dto = MapToDto(task);
+        var dto = task.ToDto();
 
         await _tasksHub.Clients.User(request.UserId).SendAsync("TaskUpdated", dto, cancellationToken);
 
         return dto;
     }
 
-    private static TaskItemDto MapToDto(TaskItem task)
-    {
-        return new TaskItemDto(
-            task.Id,
-            task.Title,
-            task.Description,
-            (int)task.Priority,
-            (int)task.Status,
-            task.Deadline,
-            task.OrderIndex,
-            task.CreatedAt,
-            task.UpdatedAt,
-            task.TaskTags.Select(tt => new TagDto(tt.Tag.Id, tt.Tag.Name, tt.Tag.Color)).ToList(),
-            task.Comments.Select(c => new TaskCommentDto(c.Id, c.UserId, c.Content, c.CreatedAt)).ToList(),
-            task.Attachments.Select(a => new TaskAttachmentDto(a.Id, a.FileName, a.FileSize, a.UploadedAt)).ToList());
-    }
 }

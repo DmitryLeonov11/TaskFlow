@@ -1,12 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using TaskFlow.Application.DTOs;
 using TaskFlow.Domain.Identity;
+using TaskFlow.Infrastructure.Services;
 
 namespace TaskFlow.Features.Auth.Login;
 
@@ -14,16 +11,16 @@ public class LoginHandler : IRequestHandler<LoginCommand, AuthResponse>
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly IConfiguration _configuration;
+    private readonly ITokenService _tokenService;
 
     public LoginHandler(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        IConfiguration configuration)
+        ITokenService tokenService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
-        _configuration = configuration;
+        _tokenService = tokenService;
     }
 
     public async Task<AuthResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -49,11 +46,10 @@ public class LoginHandler : IRequestHandler<LoginCommand, AuthResponse>
             throw new SecurityTokenException("Invalid email or password");
         }
 
-        await _userManager.UpdateAsync(user);
         user.LastLoginAt = DateTime.UtcNow;
         await _userManager.UpdateAsync(user);
 
-        var accessToken = await GenerateJwtToken(user);
+        var accessToken = await _tokenService.GenerateAccessTokenAsync(user);
         var refreshToken = Guid.NewGuid().ToString();
 
         // TODO: Store refresh token in database
@@ -66,52 +62,5 @@ public class LoginHandler : IRequestHandler<LoginCommand, AuthResponse>
             accessToken,
             refreshToken
         );
-    }
-
-    private async Task<string> GenerateJwtToken(ApplicationUser user)
-    {
-        var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY")
-            ?? _configuration["JwtSettings:Key"]
-            ?? throw new InvalidOperationException("JWT Key not configured");
-        var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER")
-            ?? _configuration["JwtSettings:Issuer"]
-            ?? "TaskFlow";
-        var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")
-            ?? _configuration["JwtSettings:Audience"]
-            ?? "FrontendApp";
-        var jwtExpiration = int.TryParse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES"), out var exp)
-            ? exp
-            : int.Parse(_configuration["JwtSettings:ExpirationMinutes"] ?? "1440");
-
-        var key = Encoding.ASCII.GetBytes(jwtKey);
-
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, user.Id),
-            new(ClaimTypes.Email, user.Email!),
-            new("FirstName", user.FirstName ?? ""),
-            new("LastName", user.LastName ?? "")
-        };
-
-        var roles = await _userManager.GetRolesAsync(user);
-        foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(jwtExpiration),
-            Issuer = jwtIssuer,
-            Audience = jwtAudience,
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
     }
 }
