@@ -106,7 +106,7 @@ jobs:
 
       - name: Run TypeScript type check
         working-directory: TaskFlow.Web
-        run: npx vue-tsc --noEmit
+        run: npx tsc --noEmit
 
       - name: Build frontend
         working-directory: TaskFlow.Web
