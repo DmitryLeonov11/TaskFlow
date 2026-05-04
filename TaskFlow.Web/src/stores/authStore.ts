@@ -1,61 +1,70 @@
-import { defineStore } from 'pinia';
-import api from '../services/apiService';
+import { create } from 'zustand';
+import api from '../api/client';
 import signalrService from '../services/signalrService';
-import { ref, computed } from 'vue';
+import notificationsSignalrService from '../services/notificationsSignalrService';
+import type { User } from '../types';
 
-export const useAuthStore = defineStore('auth', () => {
-    const token = ref<string | null>(localStorage.getItem('auth_token'));
-    const user = ref<any>(null);
+interface AuthState {
+  token: string | null;
+  user: User | null;
+  isAuthenticated: boolean;
+  isAdmin: boolean;
+  setAuth: (token: string, user: User) => void;
+  login: (credentials: { email: string; password: string }) => Promise<void>;
+  register: (data: {
+    email: string; password: string; confirmPassword: string;
+    firstName?: string; lastName?: string;
+  }) => Promise<void>;
+  logout: () => Promise<void>;
+  restoreFromStorage: () => void;
+}
 
-    const userStr = localStorage.getItem('auth_user');
-    if (userStr) {
-        try {
-            user.value = JSON.parse(userStr);
-        } catch {
-            user.value = null;
-        }
-    }
+const parseUser = (str: string | null): User | null => {
+  if (!str) return null;
+  try { return JSON.parse(str); } catch { return null; }
+};
 
-    const isAuthenticated = computed(() => !!token.value);
+export const useAuthStore = create<AuthState>((set, get) => ({
+  token: localStorage.getItem('auth_token'),
+  user: parseUser(localStorage.getItem('auth_user')),
+  get isAuthenticated() { return !!get().token; },
+  get isAdmin() {
+    const u = get().user as any;
+    return u?.roles?.includes('Admin') || u?.role === 'Admin' || false;
+  },
 
-    const getUser = computed(() => user.value);
+  setAuth: (token, user) => {
+    localStorage.setItem('auth_token', token);
+    localStorage.setItem('auth_user', JSON.stringify(user));
+    set({ token, user });
+  },
 
-    const setAuth = (accessToken: string, userData: any) => {
-        localStorage.setItem('auth_token', accessToken);
-        localStorage.setItem('auth_user', JSON.stringify(userData));
-        token.value = accessToken;
-        user.value = userData;
+  login: async (credentials) => {
+    const { data } = await api.post('/auth/login', credentials);
+    const authData: User = {
+      id: data.userId,
+      email: data.email,
+      firstName: data.firstName,
+      lastName: data.lastName,
     };
+    get().setAuth(data.accessToken, authData);
+  },
 
-    const login = async (credentials: any) => {
-        const response = await api.post('/auth/login', credentials);
-        const userData = {
-            id: response.data.id,
-            email: response.data.email,
-            firstName: response.data.firstName,
-            lastName: response.data.lastName
-        };
-        setAuth(response.data.accessToken, userData);
-    };
+  register: async (data) => {
+    await api.post('/auth/register', data);
+  },
 
-    const register = async (userData: any) => {
-        const response = await api.post('/auth/register', userData);
-        const authData = {
-            id: response.data.id,
-            email: response.data.email,
-            firstName: response.data.firstName,
-            lastName: response.data.lastName
-        };
-        setAuth(response.data.accessToken, authData);
-    };
+  logout: async () => {
+    await signalrService.stopConnection();
+    await notificationsSignalrService.stopConnection();
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+    set({ token: null, user: null });
+  },
 
-    const logout = async () => {
-        await signalrService.stopConnection();
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
-        token.value = null;
-        user.value = null;
-    };
-
-    return { token, user, isAuthenticated, getUser, login, register, logout, setAuth };
-});
+  restoreFromStorage: () => {
+    const token = localStorage.getItem('auth_token');
+    const user = parseUser(localStorage.getItem('auth_user'));
+    if (token && user) set({ token, user });
+  },
+}));

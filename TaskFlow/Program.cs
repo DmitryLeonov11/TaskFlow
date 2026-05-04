@@ -106,7 +106,7 @@ public class Program
             ? exp
             : 1440;
 
-        var key = Encoding.ASCII.GetBytes(jwtKey);
+        var key = Encoding.UTF8.GetBytes(jwtKey);
 
         Log.Logger.Information("JWT Configured: Key length={KeyLen}, Issuer={Issuer}, Audience={Audience}, Expiration={Exp}min",
             jwtKey.Length, jwtIssuer, jwtAudience, jwtExpiration);
@@ -264,9 +264,34 @@ public class Program
 
             // Seed roles
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            if (!await roleManager.RoleExistsAsync("User"))
+            foreach (var role in new[] { "User", "Admin" })
             {
-                await roleManager.CreateAsync(new IdentityRole("User"));
+                if (!await roleManager.RoleExistsAsync(role))
+                    await roleManager.CreateAsync(new IdentityRole(role));
+            }
+
+            // Seed default admin user
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var adminEmail = Environment.GetEnvironmentVariable("ADMIN_EMAIL") ?? "admin@taskflow.com";
+            var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "Admin@1234!";
+            if (await userManager.FindByEmailAsync(adminEmail) == null)
+            {
+                var admin = new ApplicationUser
+                {
+                    UserName = adminEmail,
+                    Email = adminEmail,
+                    FirstName = "Admin",
+                    LastName = "TaskFlow",
+                    EmailConfirmed = true,
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                };
+                var result = await userManager.CreateAsync(admin, adminPassword);
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(admin, "Admin");
+                    await userManager.AddToRoleAsync(admin, "User");
+                }
             }
         }
 

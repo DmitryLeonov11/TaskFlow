@@ -1,11 +1,11 @@
 {
   "name": "taskflow.web",
   "private": true,
-  "version": "1.1.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -13,25 +13,24 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@microsoft/signalr": "^8.0.7",
-    "@vueuse/core": "^13.1.0",
     "axios": "^1.8.4",
     "dayjs": "^1.11.13",
-    "js-cookie": "^3.0.5",
-    "lucide-vue-next": "^0.487.0",
-    "pinia": "^3.0.1",
-    "vue": "^3.5.13",
-    "vue-router": "^4.5.0"
+    "lucide-react": "^0.487.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.3",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@types/js-cookie": "^3.0.6",
     "@types/node": "^22.13.10",
-    "@vitejs/plugin-vue": "^5.2.3",
+    "@types/react": "^18.3.28",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.21",
     "daisyui": "^5.0.9",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2",
-    "vite": "^6.2.2",
-    "vue-tsc": "^2.2.8"
+    "vite": "^6.2.2"
   }
 }

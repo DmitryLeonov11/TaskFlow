@@ -9,6 +9,7 @@ public class GetTasksQuery : IRequest<GetTasksResponse>
     public int? Status { get; set; }
     public IReadOnlyList<Guid>? TagIds { get; set; }
     public string? SearchTerm { get; set; }
+    public Guid? ProjectId { get; set; }
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 50;
 }

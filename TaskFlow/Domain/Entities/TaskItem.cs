@@ -29,8 +29,18 @@ public class TaskItem
     public DateTime UpdatedAt { get; set; }
     public required string UserId { get; set; }
 
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAt { get; set; }
+
+    public Guid? ProjectId { get; set; }
+    public Project? Project { get; set; }
+
+    public Guid? ParentTaskId { get; set; }
+    public TaskItem? ParentTask { get; set; }
+
     // Navigation properties
     public ICollection<TaskTag> TaskTags { get; set; } = new List<TaskTag>();
     public ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();
     public ICollection<TaskAttachment> Attachments { get; set; } = new List<TaskAttachment>();
+    public ICollection<TaskItem> Subtasks { get; set; } = new List<TaskItem>();
 }

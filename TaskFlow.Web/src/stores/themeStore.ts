@@ -1,20 +1,20 @@
-import { defineStore } from 'pinia';
-import { ref, watch } from 'vue';
+import { create } from 'zustand';
 
-export const useThemeStore = defineStore('theme', () => {
-  const isDark = ref(localStorage.getItem('theme') === 'dark');
+interface ThemeState {
+  isDark: boolean;
+  toggle: () => void;
+}
 
-  const applyTheme = (dark: boolean) => {
-    const theme = dark ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  };
+const initial = localStorage.getItem('theme') === 'dark';
 
-  watch(isDark, applyTheme, { immediate: true });
-
-  const toggle = () => {
-    isDark.value = !isDark.value;
-  };
-
-  return { isDark, toggle };
-});
+export const useThemeStore = create<ThemeState>((set) => ({
+  isDark: initial,
+  toggle: () =>
+    set((s) => {
+      const next = !s.isDark;
+      const theme = next ? 'dark' : 'light';
+      localStorage.setItem('theme', theme);
+      document.documentElement.setAttribute('data-theme', theme);
+      return { isDark: next };
+    }),
+}));

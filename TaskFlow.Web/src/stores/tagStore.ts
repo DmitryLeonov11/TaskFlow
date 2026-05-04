@@ -1,37 +1,30 @@
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import api from '../services/apiService';
+import { create } from 'zustand';
+import api from '../api/client';
+import type { Tag } from '../types';
 
-export interface Tag {
-    id: string;
-    name: string;
-    color: string | null;
+interface TagState {
+  tags: Tag[];
+  fetchTags: () => Promise<void>;
+  createTag: (name: string, color?: string) => Promise<Tag>;
+  deleteTag: (id: string) => Promise<void>;
 }
 
-export const useTagStore = defineStore('tags', () => {
-    const tags = ref<Tag[]>([]);
-    const loading = ref(false);
+export const useTagStore = create<TagState>((set) => ({
+  tags: [],
 
-    const fetchTags = async () => {
-        loading.value = true;
-        try {
-            const response = await api.get<Tag[]>('/tags');
-            tags.value = response.data;
-        } finally {
-            loading.value = false;
-        }
-    };
+  fetchTags: async () => {
+    const { data } = await api.get('/tags');
+    set({ tags: data });
+  },
 
-    const createTag = async (name: string, color?: string) => {
-        const response = await api.post<Tag>('/tags', { name, color });
-        tags.value.push(response.data);
-        return response.data;
-    };
+  createTag: async (name, color) => {
+    const { data } = await api.post('/tags', { name, color });
+    set((s) => ({ tags: [...s.tags, data] }));
+    return data;
+  },
 
-    const deleteTag = async (id: string) => {
-        await api.delete(`/tags/${id}`);
-        tags.value = tags.value.filter(t => t.id !== id);
-    };
-
-    return { tags, loading, fetchTags, createTag, deleteTag };
-});
+  deleteTag: async (id) => {
+    await api.delete(`/tags/${id}`);
+    set((s) => ({ tags: s.tags.filter((t) => t.id !== id) }));
+  },
+}));

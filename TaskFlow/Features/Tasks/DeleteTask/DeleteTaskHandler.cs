@@ -19,7 +19,8 @@ public class DeleteTaskHandler : IRequestHandler<DeleteTaskCommand, bool>
             .FirstOrDefaultAsync(t => t.Id == request.TaskId && t.UserId == request.UserId, cancellationToken)
             ?? throw new KeyNotFoundException($"Task with id {request.TaskId} not found");
 
-        _dbContext.Tasks.Remove(task);
+        task.IsDeleted = true;
+        task.DeletedAt = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return true;

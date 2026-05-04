@@ -27,6 +27,8 @@ public class UpdateTaskHandler : IRequestHandler<UpdateTaskCommand, TaskItemDto>
             .Include(t => t.TaskTags)
             .ThenInclude(tt => tt.Tag)
             .Include(t => t.Comments)
+            .Include(t => t.Attachments)
+            .Include(t => t.Subtasks)
             .FirstOrDefaultAsync(t => t.Id == request.TaskId && t.UserId == request.UserId, cancellationToken)
             ?? throw new KeyNotFoundException($"Task with id {request.TaskId} not found");
 

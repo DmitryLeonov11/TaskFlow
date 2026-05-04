@@ -17,7 +17,7 @@ namespace TaskFlow.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "8.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -190,6 +190,45 @@ namespace TaskFlow.Migrations
                     b.ToTable("Notifications");
                 });
 
+            modelBuilder.Entity("TaskFlow.Domain.Entities.Project", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("Projects");
+                });
+
             modelBuilder.Entity("TaskFlow.Domain.Entities.Tag", b =>
                 {
                     b.Property<Guid>("Id")
@@ -298,15 +337,27 @@ namespace TaskFlow.Migrations
                     b.Property<DateTime?>("Deadline")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Description")
                         .HasMaxLength(5000)
                         .HasColumnType("character varying(5000)");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("OrderIndex")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("ParentTaskId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Priority")
                         .HasColumnType("integer");
+
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -324,6 +375,12 @@ namespace TaskFlow.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IsDeleted");
+
+                    b.HasIndex("ParentTaskId");
+
+                    b.HasIndex("ProjectId");
 
                     b.HasIndex("Status");
 
@@ -501,6 +558,23 @@ namespace TaskFlow.Migrations
                     b.Navigation("Task");
                 });
 
+            modelBuilder.Entity("TaskFlow.Domain.Entities.TaskItem", b =>
+                {
+                    b.HasOne("TaskFlow.Domain.Entities.TaskItem", "ParentTask")
+                        .WithMany("Subtasks")
+                        .HasForeignKey("ParentTaskId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("TaskFlow.Domain.Entities.Project", "Project")
+                        .WithMany("Tasks")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ParentTask");
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("TaskFlow.Domain.Entities.TaskTag", b =>
                 {
                     b.HasOne("TaskFlow.Domain.Entities.Tag", "Tag")
@@ -520,6 +594,11 @@ namespace TaskFlow.Migrations
                     b.Navigation("Task");
                 });
 
+            modelBuilder.Entity("TaskFlow.Domain.Entities.Project", b =>
+                {
+                    b.Navigation("Tasks");
+                });
+
             modelBuilder.Entity("TaskFlow.Domain.Entities.Tag", b =>
                 {
                     b.Navigation("TaskTags");
@@ -530,6 +609,8 @@ namespace TaskFlow.Migrations
                     b.Navigation("Attachments");
 
                     b.Navigation("Comments");
+
+                    b.Navigation("Subtasks");
 
                     b.Navigation("TaskTags");
                 });

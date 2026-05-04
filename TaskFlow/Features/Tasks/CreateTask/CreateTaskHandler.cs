@@ -32,10 +32,12 @@ public class CreateTaskHandler : IRequestHandler<CreateTaskCommand, TaskItemDto>
             Priority = (TaskPriority)request.Priority,
             Status = targetStatus,
             Deadline = request.Deadline.HasValue ? DateTime.SpecifyKind(request.Deadline.Value, DateTimeKind.Utc) : null,
-            OrderIndex = await GetNextOrderIndex(request.UserId, targetStatus, cancellationToken),
+            OrderIndex = request.ParentTaskId.HasValue ? 0 : await GetNextOrderIndex(request.UserId, targetStatus, cancellationToken),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            UserId = request.UserId
+            UserId = request.UserId,
+            ProjectId = request.ProjectId,
+            ParentTaskId = request.ParentTaskId
         };
 
         _dbContext.Tasks.Add(taskItem);
@@ -87,6 +89,9 @@ public class CreateTaskHandler : IRequestHandler<CreateTaskCommand, TaskItemDto>
             task.UpdatedAt,
             tags.Select(t => new TagDto(t.Id, t.Name, t.Color)).ToList(),
             new List<TaskCommentDto>(),
-            attachments.Select(a => new TaskAttachmentDto(a.Id, a.FileName, a.FileSize, a.UploadedAt)).ToList());
+            attachments.Select(a => new TaskAttachmentDto(a.Id, a.FileName, a.FileSize, a.UploadedAt)).ToList(),
+            task.ProjectId,
+            task.ParentTaskId,
+            new List<SubtaskDto>());
     }
 }

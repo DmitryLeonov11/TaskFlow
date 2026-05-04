@@ -24,11 +24,11 @@ public class DeleteTaskTests
     }
 
     [Fact]
-    public async Task Handle_ShouldDeleteTask_WhenTaskExists()
+    public async Task Handle_ShouldSoftDeleteTask_WhenTaskExists()
     {
         var userId = "user-123";
         var taskId = Guid.NewGuid();
-        
+
         var task = new TaskItem
         {
             Id = taskId,
@@ -40,7 +40,7 @@ public class DeleteTaskTests
             UpdatedAt = DateTime.UtcNow,
             UserId = userId
         };
-        
+
         _dbContext.Tasks.Add(task);
         await _dbContext.SaveChangesAsync();
 
@@ -48,8 +48,16 @@ public class DeleteTaskTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.Should().BeTrue();
-        var deletedTask = await _dbContext.Tasks.FindAsync(taskId);
-        deletedTask.Should().BeNull();
+
+        // Task is excluded by the query filter
+        var visibleTask = await _dbContext.Tasks.FirstOrDefaultAsync(t => t.Id == taskId);
+        visibleTask.Should().BeNull();
+
+        // But it still exists in DB with IsDeleted = true
+        var softDeletedTask = await _dbContext.Tasks.IgnoreQueryFilters().FirstOrDefaultAsync(t => t.Id == taskId);
+        softDeletedTask.Should().NotBeNull();
+        softDeletedTask!.IsDeleted.Should().BeTrue();
+        softDeletedTask.DeletedAt.Should().NotBeNull();
     }
 
     [Fact]

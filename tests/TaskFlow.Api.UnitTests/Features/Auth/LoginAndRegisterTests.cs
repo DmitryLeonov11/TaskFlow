@@ -1,11 +1,11 @@
 using FluentAssertions;
 using FluentValidation.TestHelper;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
 using Moq;
 using TaskFlow.Domain.Identity;
 using TaskFlow.Features.Auth.Login;
 using TaskFlow.Features.Auth.Register;
+using TaskFlow.Infrastructure.Services;
 using Xunit;
 
 namespace TaskFlow.Api.UnitTests.Features.Auth;
@@ -55,7 +55,7 @@ public class LoginTests
 public class RegisterTests
 {
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
-    private readonly Mock<IConfiguration> _configurationMock;
+    private readonly Mock<ITokenService> _tokenServiceMock;
     private readonly RegisterValidator _validator;
 
     public RegisterTests()
@@ -65,11 +65,9 @@ public class RegisterTests
             userStoreMock.Object,
             null!, null!, null!, null!, null!, null!, null!, null!);
 
-        _configurationMock = new Mock<IConfiguration>();
-        _configurationMock.Setup(c => c["JwtSettings:Key"]).Returns("ThisIsASecretKeyForJWT1234567890!");
-        _configurationMock.Setup(c => c["JwtSettings:Issuer"]).Returns("TaskFlow");
-        _configurationMock.Setup(c => c["JwtSettings:Audience"]).Returns("FrontendApp");
-        _configurationMock.Setup(c => c["JwtSettings:ExpirationMinutes"]).Returns("60");
+        _tokenServiceMock = new Mock<ITokenService>();
+        _tokenServiceMock.Setup(s => s.GenerateAccessTokenAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync("mocked-jwt-token");
 
         _validator = new RegisterValidator();
     }
@@ -128,7 +126,7 @@ public class RegisterTests
         _userManagerMock.Setup(x => x.FindByEmailAsync("user@example.com"))
             .ReturnsAsync(new ApplicationUser { Email = "user@example.com" });
 
-        var handler = new RegisterHandler(_userManagerMock.Object, _configurationMock.Object);
+        var handler = new RegisterHandler(_userManagerMock.Object, _tokenServiceMock.Object);
         var command = new RegisterCommand { Email = "user@example.com", Password = "TestPass123!", ConfirmPassword = "TestPass123!" };
 
         await handler.Invoking(h => h.Handle(command, CancellationToken.None))
@@ -143,7 +141,7 @@ public class RegisterTests
         _userManagerMock.Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), "TestPass123!"))
             .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Unknown error" }));
 
-        var handler = new RegisterHandler(_userManagerMock.Object, _configurationMock.Object);
+        var handler = new RegisterHandler(_userManagerMock.Object, _tokenServiceMock.Object);
         var command = new RegisterCommand { Email = "user@example.com", Password = "TestPass123!", ConfirmPassword = "TestPass123!" };
 
         await handler.Invoking(h => h.Handle(command, CancellationToken.None))

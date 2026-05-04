@@ -22,21 +22,18 @@ public class GetTasksHandler : IRequestHandler<GetTasksQuery, GetTasksResponse>
             .ThenInclude(tt => tt.Tag)
             .Include(t => t.Comments)
             .Include(t => t.Attachments)
-            .Where(t => t.UserId == request.UserId);
+            .Include(t => t.Subtasks)
+            .Where(t => t.UserId == request.UserId && t.ParentTaskId == null);
 
-        // Filter by status
+        if (request.ProjectId.HasValue)
+            query = query.Where(t => t.ProjectId == request.ProjectId.Value);
+
         if (request.Status.HasValue)
-        {
             query = query.Where(t => (int)t.Status == request.Status.Value);
-        }
 
-        // Filter by tags
         if (request.TagIds?.Count > 0)
-        {
             query = query.Where(t => t.TaskTags.Any(tt => request.TagIds.Contains(tt.TagId)));
-        }
 
-        // Search
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             var searchLower = request.SearchTerm.ToLower();

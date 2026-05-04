@@ -12,7 +12,45 @@ public record TaskItemDto(
     DateTime UpdatedAt,
     IReadOnlyList<TagDto> Tags,
     IReadOnlyList<TaskCommentDto> Comments,
-    IReadOnlyList<TaskAttachmentDto> Attachments);
+    IReadOnlyList<TaskAttachmentDto> Attachments,
+    Guid? ProjectId = null,
+    Guid? ParentTaskId = null,
+    IReadOnlyList<SubtaskDto>? Subtasks = null);
+
+public record SubtaskDto(
+    Guid Id,
+    string Title,
+    int Status,
+    int Priority,
+    DateTime CreatedAt);
+
+public record ProjectDto(
+    Guid Id,
+    string Name,
+    string? Description,
+    string? Color,
+    DateTime CreatedAt,
+    int TaskCount = 0);
+
+public record CreateProjectDto(
+    string Name,
+    string? Description,
+    string? Color);
+
+public record UpdateProjectDto(
+    string? Name,
+    string? Description,
+    string? Color);
+
+public record AdminUserDto(
+    string Id,
+    string Email,
+    string? FirstName,
+    string? LastName,
+    bool IsActive,
+    DateTime CreatedAt,
+    DateTime? LastLoginAt,
+    IReadOnlyList<string> Roles);
 
 public record PagedResponse<T>(
     T Data,
@@ -25,7 +63,9 @@ public record CreateTaskDto(
     string? Description,
     int Priority,
     DateTime? Deadline,
-    IReadOnlyList<Guid>? TagIds);
+    IReadOnlyList<Guid>? TagIds,
+    Guid? ProjectId = null,
+    Guid? ParentTaskId = null);
 
 public record UpdateTaskDto(
     string? Title,

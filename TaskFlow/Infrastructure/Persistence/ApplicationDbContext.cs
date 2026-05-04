@@ -17,6 +17,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<TaskComment> TaskComments { get; set; } = null!;
     public DbSet<TaskAttachment> TaskAttachments { get; set; } = null!;
     public DbSet<Notification> Notifications { get; set; } = null!;
+    public DbSet<Project> Projects { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -32,6 +33,32 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.Status);
             entity.HasIndex(e => new { e.UserId, e.Status });
+            entity.HasIndex(e => e.IsDeleted);
+            entity.HasQueryFilter(e => !e.IsDeleted);
+
+            // Self-referencing for subtasks
+            entity.HasOne(e => e.ParentTask)
+                .WithMany(e => e.Subtasks)
+                .HasForeignKey(e => e.ParentTaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Project FK
+            entity.HasOne(e => e.Project)
+                .WithMany(p => p.Tasks)
+                .HasForeignKey(e => e.ProjectId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Configure Project
+        builder.Entity<Project>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.Color).HasMaxLength(20);
+            entity.Property(e => e.UserId).IsRequired();
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => new { e.UserId, e.Name }).IsUnique();
         });
 
         // Configure Tag

@@ -24,6 +24,7 @@ public class GetTasksEndpoint : ControllerBase
         [FromQuery] int? status = null,
         [FromQuery] string? searchTerm = null,
         [FromQuery] List<Guid>? tagIds = null,
+        [FromQuery] Guid? projectId = null,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
@@ -37,6 +38,7 @@ public class GetTasksEndpoint : ControllerBase
             Status = status,
             SearchTerm = searchTerm,
             TagIds = tagIds?.Count > 0 ? tagIds : null,
+            ProjectId = projectId,
             PageNumber = pageNumber,
             PageSize = pageSize
         };

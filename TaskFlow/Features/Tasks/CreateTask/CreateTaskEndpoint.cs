@@ -34,6 +34,8 @@ public class CreateTaskEndpoint : ControllerBase
             Priority = dto.Priority,
             Deadline = dto.Deadline,
             TagIds = dto.TagIds,
+            ProjectId = dto.ProjectId,
+            ParentTaskId = dto.ParentTaskId,
             UserId = userId
         };
 
