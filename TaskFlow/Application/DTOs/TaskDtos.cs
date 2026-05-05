@@ -1,3 +1,5 @@
+using TaskFlow.Application.Common;
+
 namespace TaskFlow.Application.DTOs;
 
 public record TaskItemDto(
@@ -68,12 +70,12 @@ public record CreateTaskDto(
     Guid? ParentTaskId = null);
 
 public record UpdateTaskDto(
-    string? Title,
-    string? Description,
-    int? Priority,
-    int? Status,
-    DateTime? Deadline,
-    IReadOnlyList<Guid>? TagIds);
+    Optional<string> Title,
+    Optional<string?> Description,
+    Optional<int> Priority,
+    Optional<int> Status,
+    Optional<DateTime?> Deadline,
+    Optional<IReadOnlyList<Guid>?> TagIds);
 
 public record MoveTaskDto(
     int NewStatus,

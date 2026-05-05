@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { useAuthStore } from './stores/authStore';
+import { useAuthStore, useIsAuthenticated } from './stores/authStore';
 import Sidebar from './components/Layout/Sidebar';
 import AuthPage from './pages/AuthPage';
 import BoardPage from './pages/BoardPage';
@@ -15,17 +15,21 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const { restoreFromStorage, isAuthenticated } = useAuthStore();
+  const restoreFromStorage = useAuthStore((s) => s.restoreFromStorage);
+  const isAuthenticated = useIsAuthenticated();
 
   useEffect(() => {
     restoreFromStorage();
   }, [restoreFromStorage]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      signalrService.startConnection();
-      notificationsSignalrService.startConnection();
+    if (!isAuthenticated) {
+      signalrService.stopConnection();
+      notificationsSignalrService.stopConnection();
+      return;
     }
+    signalrService.startConnection();
+    notificationsSignalrService.startConnection();
   }, [isAuthenticated]);
 
   return (

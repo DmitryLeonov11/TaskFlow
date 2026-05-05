@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text;
+using TaskFlow.Application.Common;
 using TaskFlow.Domain.Identity;
 using TaskFlow.Features.Tasks;
 using TaskFlow.Hubs;
@@ -208,7 +209,16 @@ public class Program
         });
 
         // Controllers & API
-        builder.Services.AddControllers();
+        builder.Services
+            .AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new OptionalJsonConverterFactory());
+            });
+        builder.Services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.Converters.Add(new OptionalJsonConverterFactory());
+        });
         builder.Services.AddEndpointsApiExplorer();
 
         // Swagger

@@ -7,6 +7,7 @@ using TaskFlow.Domain.Entities;
 using TaskFlow.Features.Tasks.UpdateTask;
 using TaskFlow.Hubs;
 using TaskFlow.Infrastructure.Persistence;
+using TaskFlow.Application.Common;
 using Xunit;
 using TaskStatus = TaskFlow.Domain.Entities.TaskStatus;
 
@@ -160,7 +161,7 @@ public class UpdateTaskTests
         {
             TaskId = taskId,
             UserId = userId,
-            Title = "Updated Title"
+            Title = new Optional<string>("Updated Title")
         };
 
         // Act
@@ -194,7 +195,7 @@ public class UpdateTaskTests
         {
             TaskId = Guid.NewGuid(),
             UserId = "user-123",
-            Title = new string('A', 501)
+            Title = new Optional<string>(new string('A', 501))
         };
 
         var result = _validator.TestValidate(command);
@@ -208,7 +209,7 @@ public class UpdateTaskTests
         {
             TaskId = Guid.NewGuid(),
             UserId = "user-123",
-            Description = new string('A', 5001)
+            Description = new Optional<string?>(new string('A', 5001))
         };
 
         var result = _validator.TestValidate(command);
@@ -222,7 +223,7 @@ public class UpdateTaskTests
         {
             TaskId = Guid.NewGuid(),
             UserId = "user-123",
-            Priority = 5
+            Priority = new Optional<int>(5)
         };
 
         var result = _validator.TestValidate(command);
@@ -266,9 +267,9 @@ public class UpdateTaskTests
             UserId = "user-123",
             Title = "Valid Title",
             Description = "Valid Description",
-            Priority = 2,
-            Status = 1,
-            Deadline = DateTime.UtcNow.AddDays(7)
+            Priority = new Optional<int>(2),
+            Status = new Optional<int>(1),
+            Deadline = new Optional<DateTime?>(DateTime.UtcNow.AddDays(7))
         };
 
         var result = _validator.TestValidate(command);

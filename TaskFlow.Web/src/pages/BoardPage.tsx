@@ -1,24 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
-  DndContext, DragEndEvent, DragOverEvent, DragStartEvent,
+  DndContext, DragEndEvent, DragStartEvent,
   PointerSensor, useSensor, useSensors, closestCorners, DragOverlay,
 } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
 import { Plus, Search, X } from 'lucide-react';
 import { useTaskStore } from '../stores/taskStore';
 import { useTagStore } from '../stores/tagStore';
 import { useProjectStore } from '../stores/projectStore';
 import KanbanColumn from '../components/Task/KanbanColumn';
-import TaskCard from '../components/Task/TaskCard';
+import TaskCard, { TaskCardPreview } from '../components/Task/TaskCard';
 import TaskForm from '../components/Task/TaskForm';
+import { STATUSES, TaskStatus } from '../constants/task';
 import type { Task, CreateTaskInput, UpdateTaskInput } from '../types';
 
-const COLUMNS = [
-  { id: 0, title: 'To Do' },
-  { id: 1, title: 'In Progress' },
-  { id: 2, title: 'Review' },
-  { id: 3, title: 'Done' },
-];
+const COLUMNS = STATUSES.map((s) => ({ id: s.value, title: s.label }));
 
 export default function BoardPage() {
   const { tasks, loading, fetchTasks, createTask, updateTask, moveTask, deleteTask } = useTaskStore();
@@ -27,7 +22,7 @@ export default function BoardPage() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
-  const [defaultStatus, setDefaultStatus] = useState(0);
+  const [defaultStatus, setDefaultStatus] = useState<number>(TaskStatus.Todo);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -47,8 +42,16 @@ export default function BoardPage() {
     return result;
   }, [tasks, searchTerm, selectedTagIds]);
 
-  const getColumnTasks = (status: number) =>
-    filteredTasks.filter((t) => t.status === status).sort((a, b) => a.orderIndex - b.orderIndex);
+  const tasksByStatus = useMemo(
+    () =>
+      Object.fromEntries(
+        COLUMNS.map((col) => [
+          col.id,
+          filteredTasks.filter((t) => t.status === col.id).sort((a, b) => a.orderIndex - b.orderIndex),
+        ])
+      ) as Record<number, Task[]>,
+    [filteredTasks]
+  );
 
   const handleDragStart = (e: DragStartEvent) => {
     const task = tasks.find((t) => t.id === e.active.id);
@@ -93,7 +96,7 @@ export default function BoardPage() {
     if (editingTask) {
       await updateTask(editingTask.id, data as UpdateTaskInput);
     } else {
-      await createTask({ ...(data as CreateTaskInput), status: (data as any).status ?? defaultStatus });
+      await createTask({ ...(data as CreateTaskInput), status: data.status ?? defaultStatus });
     }
     setIsFormOpen(false);
   };
@@ -115,7 +118,7 @@ export default function BoardPage() {
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-base-content">Board</h1>
           <button
-            onClick={() => handleAddTask(0)}
+            onClick={() => handleAddTask(TaskStatus.Todo)}
             className="bg-primary hover:bg-primary/90 text-primary-content px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-1.5"
           >
             <Plus className="h-4 w-4" /> New Task
@@ -182,14 +185,14 @@ export default function BoardPage() {
                   key={col.id}
                   id={col.id}
                   title={col.title}
-                  tasks={getColumnTasks(col.id)}
+                  tasks={tasksByStatus[col.id]}
                   onTaskClick={handleTaskClick}
                   onAddTask={handleAddTask}
                 />
               ))}
             </div>
             <DragOverlay>
-              {activeTask && <TaskCard task={activeTask} onClick={() => {}} />}
+              {activeTask && <TaskCardPreview task={activeTask} />}
             </DragOverlay>
           </DndContext>
         )}

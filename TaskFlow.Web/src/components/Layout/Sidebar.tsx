@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Clock, Bell, LogOut, Sun, Moon, Shield, FolderOpen, Plus, Trash2 } from 'lucide-react';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore, useIsAuthenticated } from '../../stores/authStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { useNotificationStore } from '../../stores/notificationStore';
 import { useProjectStore } from '../../stores/projectStore';
@@ -10,7 +10,8 @@ import NotificationsPanel from '../Notification/NotificationsPanel';
 
 export default function Sidebar() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
   const { isDark, toggle } = useThemeStore();
   const { unreadCount, fetchNotifications } = useNotificationStore();
   const { projects, selectedProjectId, fetchProjects, createProject, deleteProject, selectProject } = useProjectStore();

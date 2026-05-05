@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Calendar, Flag, CheckCircle2, Circle } from 'lucide-react';
 import { useTaskStore } from '../stores/taskStore';
+import { PRIORITY_COLORS, PRIORITY_LABELS, TaskStatus } from '../constants/task';
 import dayjs from 'dayjs';
 import type { Task, UpdateTaskInput } from '../types';
 import TaskForm from '../components/Task/TaskForm';
-
-const PRIORITY_COLORS: Record<number, string> = { 0: 'text-base-content/40', 1: 'text-info', 2: 'text-warning', 3: 'text-error' };
-const PRIORITY_LABELS: Record<number, string> = { 0: 'Low', 1: 'Medium', 2: 'High', 3: 'Urgent' };
 
 export default function TodayPage() {
   const { tasks, loading, fetchTasks, updateTask, deleteTask } = useTaskStore();
@@ -14,24 +12,32 @@ export default function TodayPage() {
 
   useEffect(() => { fetchTasks(); }, []);
 
-  const todayTasks = useMemo(() => {
-    const today = dayjs().startOf('day');
-    return tasks.filter((t) => {
-      if (t.status === 3) return false;
-      if (t.deadline && dayjs(t.deadline).isBefore(dayjs().add(1, 'day').startOf('day'))) return true;
-      return false;
-    }).sort((a, b) => {
-      const ad = a.deadline ? dayjs(a.deadline).valueOf() : Infinity;
-      const bd = b.deadline ? dayjs(b.deadline).valueOf() : Infinity;
-      return ad - bd;
-    });
+  const { overdueTasks, dueTodayTasks } = useMemo(() => {
+    const startOfToday = dayjs().startOf('day');
+    const startOfTomorrow = startOfToday.add(1, 'day');
+    const overdue: Task[] = [];
+    const dueToday: Task[] = [];
+
+    for (const t of tasks) {
+      if (t.status === TaskStatus.Done || !t.deadline) continue;
+      const d = dayjs(t.deadline);
+      if (d.isBefore(startOfToday)) overdue.push(t);
+      else if (d.isBefore(startOfTomorrow)) dueToday.push(t);
+    }
+
+    const byDeadline = (a: Task, b: Task) =>
+      dayjs(a.deadline!).valueOf() - dayjs(b.deadline!).valueOf();
+
+    return {
+      overdueTasks: overdue.sort(byDeadline),
+      dueTodayTasks: dueToday.sort(byDeadline),
+    };
   }, [tasks]);
 
-  const overdueTasks = todayTasks.filter((t) => t.deadline && dayjs(t.deadline).isBefore(dayjs(), 'day'));
-  const dueTodayTasks = todayTasks.filter((t) => t.deadline && dayjs(t.deadline).isSame(dayjs(), 'day'));
+  const totalCount = overdueTasks.length + dueTodayTasks.length;
 
   const handleToggleDone = async (task: Task) => {
-    await updateTask(task.id, { status: task.status === 3 ? 0 : 3 });
+    await updateTask(task.id, { status: task.status === TaskStatus.Done ? TaskStatus.Todo : TaskStatus.Done });
   };
 
   const handleSave = async (data: UpdateTaskInput) => {
@@ -45,10 +51,10 @@ export default function TodayPage() {
     setEditingTask(null);
   };
 
-  const TaskRow = ({ task }: { task: Task }) => (
+  const TaskRow = ({ task, isOverdue }: { task: Task; isOverdue: boolean }) => (
     <div className="flex items-center gap-3 p-3 bg-base-100 rounded-xl border border-base-300 hover:border-primary/30 transition-colors group">
       <button onClick={() => handleToggleDone(task)} className="flex-shrink-0">
-        {task.status === 3
+        {task.status === TaskStatus.Done
           ? <CheckCircle2 className="w-5 h-5 text-success" />
           : <Circle className="w-5 h-5 text-base-content/30" />
         }
@@ -57,11 +63,11 @@ export default function TodayPage() {
         className="flex-1 min-w-0 cursor-pointer"
         onClick={() => setEditingTask(task)}
       >
-        <p className={`text-sm font-medium truncate ${task.status === 3 ? 'line-through text-base-content/40' : 'text-base-content'}`}>
+        <p className={`text-sm font-medium truncate ${task.status === TaskStatus.Done ? 'line-through text-base-content/40' : 'text-base-content'}`}>
           {task.title}
         </p>
         {task.deadline && (
-          <p className={`text-xs flex items-center gap-1 mt-0.5 ${dayjs(task.deadline).isBefore(dayjs(), 'day') ? 'text-error' : 'text-base-content/50'}`}>
+          <p className={`text-xs flex items-center gap-1 mt-0.5 ${isOverdue ? 'text-error' : 'text-base-content/50'}`}>
             <Calendar className="w-3 h-3" />
             {dayjs(task.deadline).format('MMM D, YYYY')}
           </p>
@@ -83,7 +89,7 @@ export default function TodayPage() {
           <div className="flex justify-center items-center h-full">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
           </div>
-        ) : todayTasks.length === 0 ? (
+        ) : totalCount === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-base-content/40">
             <CheckCircle2 className="w-12 h-12 mb-3" />
             <p className="text-lg font-medium">All clear for today!</p>
@@ -97,7 +103,7 @@ export default function TodayPage() {
                   <Calendar className="w-4 h-4" /> Overdue ({overdueTasks.length})
                 </h2>
                 <div className="space-y-2">
-                  {overdueTasks.map((t) => <TaskRow key={t.id} task={t} />)}
+                  {overdueTasks.map((t) => <TaskRow key={t.id} task={t} isOverdue />)}
                 </div>
               </section>
             )}
@@ -108,7 +114,7 @@ export default function TodayPage() {
                   <Calendar className="w-4 h-4" /> Due Today ({dueTodayTasks.length})
                 </h2>
                 <div className="space-y-2">
-                  {dueTodayTasks.map((t) => <TaskRow key={t.id} task={t} />)}
+                  {dueTodayTasks.map((t) => <TaskRow key={t.id} task={t} isOverdue={false} />)}
                 </div>
               </section>
             )}

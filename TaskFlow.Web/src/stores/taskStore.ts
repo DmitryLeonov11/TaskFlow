@@ -18,15 +18,22 @@ interface TaskState {
   totalCount: number;
   fetchTasks: (params?: FetchParams) => Promise<void>;
   createTask: (data: CreateTaskInput) => Promise<Task>;
-  updateTask: (id: string, data: UpdateTaskInput) => Promise<void>;
+  updateTask: (id: string, data: UpdateTaskInput) => Promise<Task>;
   moveTask: (id: string, status: number, orderIndex: number) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
-  getTasksForStatus: (status: number) => Task[];
   upsertTask: (task: Task) => void;
   removeTask: (id: string) => void;
 }
 
-export const useTaskStore = create<TaskState>((set, get) => ({
+const normalizeTask = (task: Task): Task => ({
+  ...task,
+  tags: task.tags ?? [],
+  comments: task.comments ?? [],
+  attachments: task.attachments ?? [],
+  subtasks: task.subtasks ?? [],
+});
+
+export const useTaskStore = create<TaskState>((set) => ({
   tasks: [],
   loading: false,
   error: null,
@@ -45,9 +52,10 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       if (params.projectId) queryParams.projectId = params.projectId;
 
       const { data } = await api.get('/tasks', { params: queryParams });
-      set({ tasks: data.tasks ?? [], totalCount: data.totalCount ?? 0 });
+      const tasks: Task[] = (data.tasks ?? []).map(normalizeTask);
+      set({ tasks, totalCount: data.totalCount ?? 0 });
     } catch (e: unknown) {
-      const msg = (e as any)?.response?.data?.message ?? 'Failed to fetch tasks';
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to fetch tasks';
       set({ error: msg });
       throw e;
     } finally {
@@ -57,30 +65,27 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
   createTask: async (taskData) => {
     const { data } = await api.post('/tasks', taskData);
-    const task: Task = data;
-    if (!task.tags) task.tags = [];
-    if (!task.comments) task.comments = [];
-    if (!task.attachments) task.attachments = [];
-    if (!task.subtasks) task.subtasks = [];
+    const task = normalizeTask(data);
     set((s) => ({ tasks: [...s.tasks, task] }));
     return task;
   },
 
   updateTask: async (id, taskData) => {
     const { data } = await api.put(`/tasks/${id}`, taskData);
-    const updated: Task = data;
+    const updated = normalizeTask(data);
     set((s) => ({
-      tasks: s.tasks.map((t) =>
-        t.id === id
-          ? { ...t, ...updated, tags: updated.tags ?? t.tags, subtasks: updated.subtasks ?? t.subtasks }
-          : t
-      ),
+      tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...updated } : t)),
     }));
+    return updated;
   },
 
   moveTask: async (id, newStatus, newOrderIndex) => {
     await api.put(`/tasks/${id}/move`, { newStatus, newOrderIndex });
-    await get().fetchTasks();
+    set((s) => ({
+      tasks: s.tasks.map((t) =>
+        t.id === id ? { ...t, status: newStatus, orderIndex: newOrderIndex } : t
+      ),
+    }));
   },
 
   deleteTask: async (id) => {
@@ -88,20 +93,16 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }));
   },
 
-  getTasksForStatus: (status) =>
-    get()
-      .tasks.filter((t) => t.status === status)
-      .sort((a, b) => a.orderIndex - b.orderIndex),
-
   upsertTask: (task) =>
     set((s) => {
+      const normalized = normalizeTask(task);
       const idx = s.tasks.findIndex((t) => t.id === task.id);
       if (idx !== -1) {
         const tasks = [...s.tasks];
-        tasks[idx] = task;
+        tasks[idx] = normalized;
         return { tasks };
       }
-      return { tasks: [...s.tasks, task] };
+      return { tasks: [...s.tasks, normalized] };
     }),
 
   removeTask: (id) =>

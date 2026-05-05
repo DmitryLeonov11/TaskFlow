@@ -1,18 +1,11 @@
-import { useState, useEffect } from 'react';
-import { X, Trash2, Plus, Check, Flag, Calendar } from 'lucide-react';
+import { useState } from 'react';
+import { X, Trash2, Plus, Check } from 'lucide-react';
 import type { Task, CreateTaskInput, UpdateTaskInput, Subtask } from '../../types';
 import { useTagStore } from '../../stores/tagStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useTaskStore } from '../../stores/taskStore';
-import api from '../../api/client';
+import { PRIORITIES, STATUSES, TaskStatus } from '../../constants/task';
 import dayjs from 'dayjs';
-
-const PRIORITIES = [
-  { value: 0, label: 'Low', color: 'text-base-content/40' },
-  { value: 1, label: 'Medium', color: 'text-info' },
-  { value: 2, label: 'High', color: 'text-warning' },
-  { value: 3, label: 'Urgent', color: 'text-error' },
-];
 
 interface Props {
   initialData?: Partial<Task> & { status?: number };
@@ -25,12 +18,12 @@ interface Props {
 export default function TaskForm({ initialData, isEditing, onSave, onDelete, onCancel }: Props) {
   const { tags } = useTagStore();
   const { projects } = useProjectStore();
-  const { createTask: storeCreateTask } = useTaskStore();
+  const { createTask: storeCreateTask, updateTask: storeUpdateTask, deleteTask: storeDeleteTask } = useTaskStore();
 
   const [title, setTitle] = useState(initialData?.title ?? '');
   const [description, setDescription] = useState(initialData?.description ?? '');
   const [priority, setPriority] = useState(initialData?.priority ?? 1);
-  const [status, setStatus] = useState(initialData?.status ?? 0);
+  const [status, setStatus] = useState(initialData?.status ?? TaskStatus.Todo);
   const [deadline, setDeadline] = useState(
     initialData?.deadline ? dayjs(initialData.deadline).format('YYYY-MM-DD') : ''
   );
@@ -55,22 +48,34 @@ export default function TaskForm({ initialData, isEditing, onSave, onDelete, onC
     });
     setSubtasks((prev) => [
       ...prev,
-      { id: created.id, title: created.title, status: 0, priority: 1, createdAt: created.createdAt },
+      { id: created.id, title: created.title, status: created.status, priority: created.priority, createdAt: created.createdAt },
     ]);
     setNewSubtaskTitle('');
   };
 
   const handleToggleSubtask = async (subtask: Subtask) => {
     if (!isEditing) return;
-    const newStatus = subtask.status === 3 ? 0 : 3;
-    await api.put(`/tasks/${subtask.id}`, { status: newStatus });
+    const newStatus = subtask.status === TaskStatus.Done ? TaskStatus.Todo : TaskStatus.Done;
+    const prevSubtasks = subtasks;
     setSubtasks((prev) => prev.map((s) => (s.id === subtask.id ? { ...s, status: newStatus } : s)));
+    try {
+      await storeUpdateTask(subtask.id, { status: newStatus });
+    } catch (err) {
+      setSubtasks(prevSubtasks);
+      setError('Failed to update subtask');
+    }
   };
 
   const handleDeleteSubtask = async (id: string) => {
     if (!isEditing) return;
-    await api.delete(`/tasks/${id}`);
+    const prevSubtasks = subtasks;
     setSubtasks((prev) => prev.filter((s) => s.id !== id));
+    try {
+      await storeDeleteTask(id);
+    } catch (err) {
+      setSubtasks(prevSubtasks);
+      setError('Failed to delete subtask');
+    }
   };
 
   const handleSubmit = async () => {
@@ -121,7 +126,7 @@ export default function TaskForm({ initialData, isEditing, onSave, onDelete, onC
         <div>
           <label className="block text-xs font-medium text-base-content/70 mb-1">Description</label>
           <textarea
-            value={description}
+            value={description ?? ''}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
             placeholder="Optional description..."
@@ -150,10 +155,9 @@ export default function TaskForm({ initialData, isEditing, onSave, onDelete, onC
               onChange={(e) => setStatus(Number(e.target.value))}
               className="w-full px-3 py-2 text-sm border border-base-300 rounded-lg bg-base-200 text-base-content focus:ring-2 focus:ring-primary focus:outline-none"
             >
-              <option value={0}>To Do</option>
-              <option value={1}>In Progress</option>
-              <option value={2}>Review</option>
-              <option value={3}>Done</option>
+              {STATUSES.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -217,12 +221,12 @@ export default function TaskForm({ initialData, isEditing, onSave, onDelete, onC
               {subtasks.map((s) => (
                 <div key={s.id} className="flex items-center gap-2 group">
                   <button onClick={() => handleToggleSubtask(s)} className="flex-shrink-0">
-                    {s.status === 3
+                    {s.status === TaskStatus.Done
                       ? <Check className="w-4 h-4 text-success" />
                       : <div className="w-4 h-4 rounded border border-base-300" />
                     }
                   </button>
-                  <span className={`flex-1 text-sm ${s.status === 3 ? 'line-through text-base-content/40' : 'text-base-content'}`}>
+                  <span className={`flex-1 text-sm ${s.status === TaskStatus.Done ? 'line-through text-base-content/40' : 'text-base-content'}`}>
                     {s.title}
                   </span>
                   <button
