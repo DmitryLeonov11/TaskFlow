@@ -23,6 +23,7 @@ interface TaskState {
   deleteTask: (id: string) => Promise<void>;
   upsertTask: (task: Task) => void;
   removeTask: (id: string) => void;
+  removeTagFromAllTasks: (tagId: string) => void;
 }
 
 const normalizeTask = (task: Task): Task => ({
@@ -66,7 +67,13 @@ export const useTaskStore = create<TaskState>((set) => ({
   createTask: async (taskData) => {
     const { data } = await api.post('/tasks', taskData);
     const task = normalizeTask(data);
-    set((s) => ({ tasks: [...s.tasks, task] }));
+    // Use upsert to avoid duplicate if SignalR TaskCreated fires before HTTP response resolves
+    set((s) => {
+      const idx = s.tasks.findIndex((t) => t.id === task.id);
+      return idx !== -1
+        ? { tasks: s.tasks.map((t, i) => (i === idx ? task : t)) }
+        : { tasks: [...s.tasks, task] };
+    });
     return task;
   },
 
@@ -107,4 +114,9 @@ export const useTaskStore = create<TaskState>((set) => ({
 
   removeTask: (id) =>
     set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) })),
+
+  removeTagFromAllTasks: (tagId: string) =>
+    set((s) => ({
+      tasks: s.tasks.map((t) => ({ ...t, tags: t.tags.filter((tag) => tag.id !== tagId) })),
+    })),
 }));

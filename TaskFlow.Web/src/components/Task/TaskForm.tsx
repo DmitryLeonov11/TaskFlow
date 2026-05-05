@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function TaskForm({ initialData, isEditing, onSave, onDelete, onCancel }: Props) {
-  const { tags } = useTagStore();
+  const { tags, createTag } = useTagStore();
   const { projects } = useProjectStore();
   const { createTask: storeCreateTask, updateTask: storeUpdateTask, deleteTask: storeDeleteTask } = useTaskStore();
 
@@ -33,11 +33,29 @@ export default function TaskForm({ initialData, isEditing, onSave, onDelete, onC
   const [projectId, setProjectId] = useState<string>(initialData?.projectId ?? '');
   const [subtasks, setSubtasks] = useState<Subtask[]>(initialData?.subtasks ?? []);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [newTagName, setNewTagName] = useState('');
+  const [showNewTag, setShowNewTag] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const toggleTag = (id: string) =>
     setSelectedTags((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
+
+  const handleCreateTag = async () => {
+    const name = newTagName.trim();
+    if (!name) return;
+    const existing = tags.find((t) => t.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      setSelectedTags((prev) => prev.includes(existing.id) ? prev : [...prev, existing.id]);
+      setNewTagName('');
+      setShowNewTag(false);
+      return;
+    }
+    const tag = await createTag(name);
+    setSelectedTags((prev) => [...prev, tag.id]);
+    setNewTagName('');
+    setShowNewTag(false);
+  };
 
   const handleAddSubtask = async () => {
     if (!newSubtaskTitle.trim() || !isEditing || !initialData?.id) return;
@@ -191,27 +209,61 @@ export default function TaskForm({ initialData, isEditing, onSave, onDelete, onC
         )}
 
         {/* Tags */}
-        {tags.length > 0 && (
-          <div>
-            <label className="block text-xs font-medium text-base-content/70 mb-1">Tags</label>
-            <div className="flex flex-wrap gap-1.5">
-              {tags.map((tag) => (
-                <button
-                  key={tag.id}
-                  type="button"
-                  onClick={() => toggleTag(tag.id)}
-                  className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
-                    selectedTags.includes(tag.id)
-                      ? 'bg-primary text-primary-content border-primary'
-                      : 'bg-base-100 text-base-content/70 border-base-300 hover:border-primary/70 hover:text-primary'
-                  }`}
-                >
-                  {tag.name}
-                </button>
-              ))}
-            </div>
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-medium text-base-content/70">Tags</label>
+            <button
+              type="button"
+              onClick={() => setShowNewTag((v) => !v)}
+              className="p-0.5 rounded hover:bg-base-300 text-base-content/50 hover:text-base-content transition-colors"
+              title="New tag"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
           </div>
-        )}
+          {showNewTag && (
+            <div className="flex gap-1 mb-2">
+              <input
+                autoFocus
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleCreateTag(); if (e.key === 'Escape') setShowNewTag(false); }}
+                placeholder="Tag name"
+                className={`flex-1 px-2 py-1 text-xs border rounded bg-base-200 text-base-content focus:ring-1 focus:outline-none ${
+                  tags.some((t) => t.name.toLowerCase() === newTagName.trim().toLowerCase())
+                    ? 'border-warning focus:ring-warning'
+                    : 'border-base-300 focus:ring-primary'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={handleCreateTag}
+                className="px-2 py-1 text-xs bg-primary text-primary-content rounded hover:bg-primary/90"
+              >
+                {tags.some((t) => t.name.toLowerCase() === newTagName.trim().toLowerCase()) ? 'Select' : 'Add'}
+              </button>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((tag) => (
+              <button
+                key={tag.id}
+                type="button"
+                onClick={() => toggleTag(tag.id)}
+                className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                  selectedTags.includes(tag.id)
+                    ? 'bg-primary text-primary-content border-primary'
+                    : 'bg-base-100 text-base-content/70 border-base-300 hover:border-primary/70 hover:text-primary'
+                }`}
+              >
+                {tag.name}
+              </button>
+            ))}
+            {tags.length === 0 && !showNewTag && (
+              <span className="text-xs text-base-content/40">No tags yet</span>
+            )}
+          </div>
+        </div>
 
         {/* Subtasks (only on edit) */}
         {isEditing && (

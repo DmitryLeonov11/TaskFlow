@@ -65,10 +65,10 @@ public class UpdateTaskTests
         {
             TaskId = taskId,
             UserId = userId,
-            Title = "Updated Title",
-            Description = "Updated Description",
-            Priority = 3,
-            Status = 1
+            Title = new Optional<string>("Updated Title"),
+            Description = new Optional<string?>("Updated Description"),
+            Priority = new Optional<int>(3),
+            Status = new Optional<int>(1)
         };
 
         // Act
@@ -95,7 +95,7 @@ public class UpdateTaskTests
         {
             TaskId = Guid.NewGuid(),
             UserId = "user-123",
-            Title = "Updated Title"
+            Title = new Optional<string>("Updated Title")
         };
 
         // Act & Assert
@@ -127,7 +127,7 @@ public class UpdateTaskTests
         {
             TaskId = task.Id,
             UserId = "different-user",
-            Title = "Updated Title"
+            Title = new Optional<string>("Updated Title")
         };
 
         // Act & Assert
@@ -237,7 +237,7 @@ public class UpdateTaskTests
         {
             TaskId = Guid.NewGuid(),
             UserId = "user-123",
-            Status = 5
+            Status = new Optional<int>(5)
         };
 
         var result = _validator.TestValidate(command);
@@ -251,7 +251,7 @@ public class UpdateTaskTests
         {
             TaskId = Guid.NewGuid(),
             UserId = "user-123",
-            Deadline = DateTime.UtcNow.AddDays(-1)
+            Deadline = new Optional<DateTime?>(DateTime.UtcNow.AddDays(-1))
         };
 
         var result = _validator.TestValidate(command);
@@ -265,8 +265,8 @@ public class UpdateTaskTests
         {
             TaskId = Guid.NewGuid(),
             UserId = "user-123",
-            Title = "Valid Title",
-            Description = "Valid Description",
+            Title = new Optional<string>("Valid Title"),
+            Description = new Optional<string?>("Valid Description"),
             Priority = new Optional<int>(2),
             Status = new Optional<int>(1),
             Deadline = new Optional<DateTime?>(DateTime.UtcNow.AddDays(7))

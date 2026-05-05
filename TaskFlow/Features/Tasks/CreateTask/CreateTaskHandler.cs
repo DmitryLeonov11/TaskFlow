@@ -44,86 +44,87 @@ public class CreateTaskHandler : IRequestHandler<CreateTaskCommand, TaskItemDto>
             throw new ArgumentException($"Invalid status value: {statusValue}");
         var targetStatus = (TaskStatus)statusValue;
 
-        // Postgres advisory lock serializes OrderIndex assignment per (user, status, parent).
-        // It is held until the transaction ends, preventing two concurrent inserts from picking the same value.
-        var strategy = _dbContext.Database.CreateExecutionStrategy();
-        var taskItem = await strategy.ExecuteAsync(async () =>
+        TaskItem taskItem;
+
+        if (_dbContext.Database.IsRelational())
         {
-            // Reset tracker so a transient retry cannot duplicate the previous attempt's tracked entities.
-            _dbContext.ChangeTracker.Clear();
-
-            await using var tx = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-
-            var lockKey = request.ParentTaskId.HasValue
-                ? $"taskorder:{request.UserId}:parent:{request.ParentTaskId.Value}"
-                : $"taskorder:{request.UserId}:{(int)targetStatus}:root";
-            await _dbContext.Database.ExecuteSqlRawAsync(
-                "SELECT pg_advisory_xact_lock(hashtext({0}))",
-                new object[] { lockKey },
-                cancellationToken);
-
-            var orderIndex = await GetNextOrderIndex(request.UserId, targetStatus, request.ParentTaskId, cancellationToken);
-
-            var item = new TaskItem
+            // Postgres advisory lock serializes OrderIndex assignment per (user, status, parent).
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            taskItem = await strategy.ExecuteAsync(async () =>
             {
-                Id = Guid.NewGuid(),
-                Title = request.Title,
-                Description = request.Description,
-                Priority = (TaskPriority)request.Priority,
-                Status = targetStatus,
-                Deadline = request.Deadline.HasValue
-                    ? DateTime.SpecifyKind(request.Deadline.Value, DateTimeKind.Utc)
-                    : null,
-                OrderIndex = orderIndex,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                UserId = request.UserId,
-                ProjectId = request.ProjectId,
-                ParentTaskId = request.ParentTaskId
-            };
+                _dbContext.ChangeTracker.Clear();
+                await using var tx = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-            _dbContext.Tasks.Add(item);
+                var lockKey = request.ParentTaskId.HasValue
+                    ? $"taskorder:{request.UserId}:parent:{request.ParentTaskId.Value}"
+                    : $"taskorder:{request.UserId}:{(int)targetStatus}:root";
+                await _dbContext.Database.ExecuteSqlRawAsync(
+                    "SELECT pg_advisory_xact_lock(hashtext({0}))",
+                    new object[] { lockKey },
+                    cancellationToken);
 
-            if (request.TagIds?.Count > 0)
-            {
-                var tags = await _dbContext.Tags
-                    .Where(t => request.TagIds.Contains(t.Id) && t.UserId == request.UserId)
-                    .ToListAsync(cancellationToken);
+                var item = await BuildAndSaveTaskAsync(request, targetStatus, cancellationToken);
+                await tx.CommitAsync(cancellationToken);
+                return item;
+            });
+        }
+        else
+        {
+            taskItem = await BuildAndSaveTaskAsync(request, targetStatus, cancellationToken);
+        }
 
-                foreach (var tag in tags)
-                {
-                    item.TaskTags.Add(new TaskTag { TaskId = item.Id, TagId = tag.Id });
-                }
-            }
-
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            await tx.CommitAsync(cancellationToken);
-
-            return item;
-        });
-
-        // Reload tag navigations for DTO mapping
-        await _dbContext.Entry(taskItem).Collection(t => t.TaskTags).Query().Include(tt => tt.Tag).LoadAsync(cancellationToken);
+        await _dbContext.Entry(taskItem).Collection(t => t.TaskTags).Query()
+            .Include(tt => tt.Tag).LoadAsync(cancellationToken);
 
         var dto = taskItem.ToDto();
-
         await _tasksHub.Clients.User(request.UserId).SendAsync("TaskCreated", dto, cancellationToken);
-
         return dto;
+    }
+
+    private async Task<TaskItem> BuildAndSaveTaskAsync(CreateTaskCommand request, TaskStatus targetStatus, CancellationToken cancellationToken)
+    {
+        var orderIndex = request.ParentTaskId.HasValue
+            ? await GetNextOrderIndex(request.UserId, targetStatus, request.ParentTaskId, cancellationToken)
+            : await GetNextOrderIndex(request.UserId, targetStatus, null, cancellationToken);
+
+        var item = new TaskItem
+        {
+            Id = Guid.NewGuid(),
+            Title = request.Title,
+            Description = request.Description,
+            Priority = (TaskPriority)request.Priority,
+            Status = targetStatus,
+            Deadline = request.Deadline.HasValue ? DateTime.SpecifyKind(request.Deadline.Value, DateTimeKind.Utc) : null,
+            OrderIndex = orderIndex,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            UserId = request.UserId,
+            ProjectId = request.ProjectId,
+            ParentTaskId = request.ParentTaskId
+        };
+
+        _dbContext.Tasks.Add(item);
+
+        if (request.TagIds?.Count > 0)
+        {
+            var tags = await _dbContext.Tags
+                .Where(t => request.TagIds.Contains(t.Id) && t.UserId == request.UserId)
+                .ToListAsync(cancellationToken);
+
+            foreach (var tag in tags)
+                item.TaskTags.Add(new TaskTag { TaskId = item.Id, TagId = tag.Id });
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return item;
     }
 
     private async Task<int> GetNextOrderIndex(string userId, TaskStatus status, Guid? parentTaskId, CancellationToken cancellationToken)
     {
         var query = _dbContext.Tasks.Where(t => t.UserId == userId);
-
-        if (parentTaskId.HasValue)
-        {
-            query = query.Where(t => t.ParentTaskId == parentTaskId.Value);
-        }
-        else
-        {
-            query = query.Where(t => t.ParentTaskId == null && t.Status == status);
-        }
+        query = parentTaskId.HasValue
+            ? query.Where(t => t.ParentTaskId == parentTaskId.Value)
+            : query.Where(t => t.ParentTaskId == null && t.Status == status);
 
         var maxOrder = await query.MaxAsync(t => (int?)t.OrderIndex, cancellationToken) ?? 0;
         return maxOrder + 1;

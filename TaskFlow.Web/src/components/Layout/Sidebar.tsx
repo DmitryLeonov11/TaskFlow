@@ -6,6 +6,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { useNotificationStore } from '../../stores/notificationStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useTaskStore } from '../../stores/taskStore';
+import { useTagStore } from '../../stores/tagStore';
 import NotificationsPanel from '../Notification/NotificationsPanel';
 
 export default function Sidebar() {
@@ -15,16 +16,20 @@ export default function Sidebar() {
   const { isDark, toggle } = useThemeStore();
   const { unreadCount, fetchNotifications } = useNotificationStore();
   const { projects, selectedProjectId, fetchProjects, createProject, deleteProject, selectProject } = useProjectStore();
-  const { fetchTasks } = useTaskStore();
+  const { fetchTasks, removeTagFromAllTasks } = useTaskStore();
+  const { tags, fetchTags, createTag, deleteTag } = useTagStore();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+  const [showNewTag, setShowNewTag] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchNotifications();
       fetchProjects();
+      fetchTags();
     }
   }, [isAuthenticated]);
 
@@ -38,6 +43,13 @@ export default function Sidebar() {
     await createProject({ name: newProjectName.trim() });
     setNewProjectName('');
     setShowNewProject(false);
+  };
+
+  const handleCreateTag = async () => {
+    if (!newTagName.trim()) return;
+    await createTag(newTagName.trim());
+    setNewTagName('');
+    setShowNewTag(false);
   };
 
   const handleSelectProject = (id: string | null) => {
@@ -144,6 +156,55 @@ export default function Sidebar() {
             </button>
           </div>
         ))}
+      </div>
+
+      {/* Tags */}
+      <div className="px-3 mt-4">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-semibold text-base-content/50 uppercase tracking-wider px-1">Tags</span>
+          <button
+            onClick={() => setShowNewTag(!showNewTag)}
+            className="p-1 rounded hover:bg-base-300 text-base-content/50 hover:text-base-content transition-colors"
+            title="New tag"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {showNewTag && (
+          <div className="flex gap-1 mb-1">
+            <input
+              autoFocus
+              value={newTagName}
+              onChange={(e) => setNewTagName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleCreateTag(); if (e.key === 'Escape') setShowNewTag(false); }}
+              placeholder="Tag name"
+              className="flex-1 px-2 py-1 text-xs border border-base-300 rounded bg-base-100 text-base-content focus:ring-1 focus:ring-primary focus:outline-none"
+            />
+            <button onClick={handleCreateTag} className="px-2 py-1 text-xs bg-primary text-primary-content rounded hover:bg-primary/90">
+              Add
+            </button>
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-1 px-1">
+          {tags.map((tag) => (
+            <div key={tag.id} className="group flex items-center gap-0.5">
+              <span
+                className="px-2 py-0.5 text-[10px] rounded-full cursor-default"
+                style={{ backgroundColor: tag.color ? `${tag.color}25` : '#6366f125', color: tag.color ?? '#6366f1' }}
+              >
+                {tag.name}
+              </span>
+              <button
+                onClick={async () => { await deleteTag(tag.id); removeTagFromAllTasks(tag.id); }}
+                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:text-error transition-opacity"
+              >
+                <Trash2 className="w-2.5 h-2.5" />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Bottom section */}

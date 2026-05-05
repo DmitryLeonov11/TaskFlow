@@ -206,7 +206,7 @@ export default function BoardPage() {
         >
           <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <TaskForm
-              initialData={editingTask ?? { status: defaultStatus }}
+              initialData={editingTask ?? { status: defaultStatus, projectId: selectedProjectId ?? undefined }}
               isEditing={!!editingTask}
               onSave={handleSave}
               onDelete={handleDelete}
